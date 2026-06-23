@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>기초 통계량 실험실 · 숫자로 데이터 읽기</title>
+<style>
+  @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css");
+
+  :root{
+    --bg:#EAEFF6;
+    --surface:#FFFFFF;
+    --surface-2:#F4F7FB;
+    --ink:#15233E;
+    --ink-soft:#5C6B85;
+    --line:#D6DEEA;
+    --mean:#E5533D;     /* 평균 = 중심(따뜻한 빨강) */
+    --median:#0E9C8A;   /* 중앙값 = 중심(차분한 청록) */
+    --spread:#6C4DD6;   /* 산포 = 보라 */
+    --good:#1F9D57;
+    --bad:#D2453B;
+    --gold:#C98A1B;
+    --grid:rgba(21,35,62,.05);
+    --shadow:0 1px 2px rgba(21,35,62,.06),0 12px 30px -18px rgba(21,35,62,.28);
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+    --sans:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;font-family:var(--sans);color:var(--ink);
+    background-color:var(--bg);
+    background-image:
+      linear-gradient(var(--grid) 1px,transparent 1px),
+      linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:28px 28px;
+    line-height:1.65;-webkit-font-smoothing:antialiased;
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important;scroll-behavior:auto!important;}
+  }
+
+  .wrap{max-width:920px;margin:0 auto;padding:0 18px 90px;}
+
+  /* ---------- 진행바 ---------- */
+  .topbar{
+    position:sticky;top:0;z-index:50;
+    background:rgba(234,239,246,.86);backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  .topbar-inner{max-width:920px;margin:0 auto;padding:9px 18px;
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+  .brand{font-weight:800;font-size:14px;letter-spacing:-.01em;white-space:nowrap;}
+  .brand small{color:var(--ink-soft);font-weight:600;}
+  .steps{display:flex;gap:6px;flex-wrap:wrap;flex:1;min-width:200px;}
+  .step{
+    display:inline-flex;align-items:center;gap:6px;cursor:pointer;
+    font-size:12px;font-weight:600;color:var(--ink-soft);
+    padding:4px 9px;border-radius:999px;border:1px solid transparent;
+    background:transparent;text-decoration:none;transition:.15s;
+  }
+  .step:hover{color:var(--ink);background:var(--surface);}
+  .step .dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--line);
+    display:inline-grid;place-items:center;font-size:9px;color:#fff;background:#fff;transition:.2s;}
+  .step.done{color:var(--ink);}
+  .step.done .dot{background:var(--good);border-color:var(--good);}
+  .step.done .dot::after{content:"✓";}
+  .progress-meter{font-variant-numeric:tabular-nums;font-family:var(--mono);
+    font-size:12px;color:var(--ink-soft);white-space:nowrap;}
+
+  /* ---------- 히어로 ---------- */
+  .hero{padding:54px 0 30px;}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--spread);font-weight:600;}
+  .hero h1{font-size:clamp(30px,6vw,50px);line-height:1.06;margin:14px 0 0;
+    letter-spacing:-.025em;font-weight:800;}
+  .hero h1 .ink-mean{color:var(--mean);}
+  .hero h1 .ink-spread{color:var(--spread);}
+  .hero p.lead{font-size:18px;color:var(--ink-soft);max-width:640px;margin:18px 0 0;}
+
+  .hook{
+    margin-top:30px;background:var(--surface);border:1px solid var(--line);
+    border-radius:18px;box-shadow:var(--shadow);padding:22px;
+  }
+  .hook h3{margin:0 0 4px;font-size:15px;}
+  .hook .twocol{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px;}
+  @media (max-width:560px){.hook .twocol{grid-template-columns:1fr;}}
+  .minicard{background:var(--surface-2);border:1px solid var(--line);
+    border-radius:12px;padding:13px 14px;}
+  .minicard .nums{font-family:var(--mono);font-size:13px;color:var(--ink);
+    word-spacing:2px;letter-spacing:-.02em;}
+  .minicard .label{font-size:12px;color:var(--ink-soft);margin-bottom:6px;font-weight:700;}
+  .reveal{margin-top:14px;font-size:14px;color:var(--ink-soft);}
+  .reveal b{color:var(--ink);}
+
+  /* ---------- 섹션 ---------- */
+  section.block{margin-top:46px;scroll-margin-top:64px;}
+  .sec-head{display:flex;align-items:flex-start;gap:14px;margin-bottom:8px;}
+  .sec-no{font-family:var(--mono);font-size:13px;font-weight:700;color:#fff;
+    background:var(--ink);min-width:34px;height:34px;border-radius:10px;
+    display:grid;place-items:center;margin-top:3px;}
+  .sec-head h2{font-size:24px;margin:0;letter-spacing:-.02em;}
+  .sec-head p{margin:4px 0 0;color:var(--ink-soft);font-size:15px;}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:18px;
+    box-shadow:var(--shadow);padding:22px;margin-top:16px;}
+  .card h3{margin:0 0 4px;font-size:17px;}
+  .card h3 .tag{font-family:var(--mono);font-size:11px;font-weight:700;
+    padding:2px 7px;border-radius:6px;margin-left:8px;vertical-align:middle;}
+  .tag.mean{color:var(--mean);background:rgba(229,83,61,.1);}
+  .tag.median{color:var(--median);background:rgba(14,156,138,.12);}
+  .tag.spread{color:var(--spread);background:rgba(108,77,214,.12);}
+  .muted{color:var(--ink-soft);font-size:14px;}
+
+  /* readout 칩 */
+  .stat-row{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0;}
+  .stat{flex:1;min-width:120px;background:var(--surface-2);border:1px solid var(--line);
+    border-radius:12px;padding:11px 13px;}
+  .stat .k{font-size:12px;color:var(--ink-soft);font-weight:700;display:flex;align-items:center;gap:6px;}
+  .stat .v{font-family:var(--mono);font-size:24px;font-weight:600;letter-spacing:-.03em;margin-top:2px;}
+  .swatch{width:11px;height:11px;border-radius:3px;display:inline-block;}
+  .sw-mean{background:var(--mean);}
+  .sw-median{background:var(--median);}
+  .sw-spread{background:var(--spread);}
+
+  /* SVG 박스 */
+  .viz{width:100%;background:var(--surface-2);border:1px solid var(--line);
+    border-radius:12px;overflow:hidden;}
+  .viz svg{display:block;width:100%;height:auto;}
+
+  /* 컨트롤 */
+  .ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:14px;}
+  button{font-family:var(--sans);cursor:pointer;border:1px solid var(--line);
+    background:var(--surface);color:var(--ink);font-weight:700;font-size:13px;
+    padding:8px 14px;border-radius:10px;transition:.15s;}
+  button:hover{border-color:var(--ink);}
+  button:active{transform:translateY(1px);}
+  button.primary{background:var(--ink);color:#fff;border-color:var(--ink);}
+  button.primary:hover{background:#0d1830;}
+  button.warn{background:rgba(229,83,61,.1);border-color:rgba(229,83,61,.35);color:var(--mean);}
+  button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid rgba(108,77,214,.4);outline-offset:2px;}
+
+  input[type=text],input[type=number]{font-family:var(--mono);font-size:14px;
+    border:1px solid var(--line);border-radius:9px;padding:8px 10px;width:100%;
+    background:var(--surface);color:var(--ink);}
+  input.ok{border-color:var(--good);background:rgba(31,157,87,.06);}
+  input.no{border-color:var(--bad);background:rgba(210,69,59,.06);}
+
+  input[type=range]{width:100%;accent-color:var(--spread);height:24px;}
+
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+  .chip{font-family:var(--mono);font-size:13px;background:var(--surface-2);
+    border:1px solid var(--line);border-radius:8px;padding:5px 9px;display:flex;align-items:center;gap:6px;}
+  .chip button{padding:0;border:none;background:none;color:var(--ink-soft);font-size:15px;line-height:1;}
+  .chip button:hover{color:var(--bad);}
+
+  /* 연습문제(이해 체크) */
+  .quizlet{margin-top:16px;border-top:1px dashed var(--line);padding-top:16px;}
+  .quizlet .q{font-weight:700;font-size:15px;}
+  .opts{display:grid;gap:8px;margin-top:10px;}
+  .opt{display:flex;gap:10px;align-items:flex-start;padding:11px 13px;border:1px solid var(--line);
+    border-radius:11px;cursor:pointer;background:var(--surface);transition:.12s;font-size:14px;}
+  .opt:hover{border-color:var(--ink-soft);}
+  .opt.sel{border-color:var(--ink);background:var(--surface-2);}
+  .opt.correct{border-color:var(--good);background:rgba(31,157,87,.08);}
+  .opt.wrong{border-color:var(--bad);background:rgba(210,69,59,.07);}
+  .opt .mk{font-family:var(--mono);font-weight:700;color:var(--ink-soft);}
+  .feedback{margin-top:10px;font-size:14px;border-radius:10px;padding:10px 12px;display:none;}
+  .feedback.show{display:block;}
+  .feedback.good{background:rgba(31,157,87,.08);color:#14713f;border:1px solid rgba(31,157,87,.3);}
+  .feedback.bad{background:rgba(210,69,59,.07);color:#9c2c24;border:1px solid rgba(210,69,59,.3);}
+
+  /* 검증형 입력 그리드 */
+  .verify-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:14px;}
+  .vfield label{font-size:12px;font-weight:700;color:var(--ink-soft);display:flex;justify-content:space-between;}
+  .vfield .res{font-family:var(--mono);font-size:12px;}
+  .interpret{margin-top:14px;background:var(--surface-2);border:1px solid var(--line);
+    border-left:3px solid var(--gold);border-radius:0 12px 12px 0;padding:14px 16px;display:none;}
+  .interpret.show{display:block;}
+  .interpret h4{margin:0 0 6px;font-size:14px;color:var(--gold);font-family:var(--mono);letter-spacing:.04em;}
+  .interpret p{margin:6px 0;font-size:14px;}
+  .interpret b{color:var(--ink);}
+
+  /* 형성평가 */
+  .exam-q{padding:18px 0;border-bottom:1px solid var(--line);}
+  .exam-q:last-child{border-bottom:none;}
+  .qnum{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--spread);}
+  .qtag{font-family:var(--mono);font-size:10px;color:var(--ink-soft);border:1px solid var(--line);
+    border-radius:5px;padding:1px 6px;margin-left:6px;}
+  .numeric-in{max-width:220px;margin-top:10px;}
+  .exam-actions{position:sticky;bottom:14px;margin-top:18px;display:flex;gap:10px;
+    align-items:center;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);
+    box-shadow:var(--shadow);border-radius:14px;padding:12px 16px;}
+  .scorebig{font-family:var(--mono);font-weight:700;font-size:18px;}
+  .scorebar{flex:1;min-width:120px;height:10px;border-radius:6px;background:var(--surface-2);overflow:hidden;border:1px solid var(--line);}
+  .scorebar > i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--median),var(--good));transition:width .5s;}
+
+  footer{margin-top:50px;text-align:center;color:var(--ink-soft);font-size:13px;}
+  .kbd{font-family:var(--mono);font-size:12px;background:var(--surface-2);border:1px solid var(--line);
+    border-radius:5px;padding:1px 6px;}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--ink-soft);margin-top:8px;}
+  .legend span{display:inline-flex;align-items:center;gap:5px;}
+  .formula{font-family:var(--mono);font-size:13px;background:var(--surface-2);border:1px solid var(--line);
+    border-radius:9px;padding:9px 12px;display:inline-block;margin:6px 0;color:var(--ink);}
+
+  /* ---------- 개념 설명 박스 ---------- */
+  .concept{background:var(--surface-2);border:1px solid var(--line);border-left:4px solid var(--spread);
+    border-radius:0 14px 14px 0;padding:16px 18px;margin:14px 0;}
+  .concept.warm{border-left-color:var(--mean);}
+  .concept.cool{border-left-color:var(--median);}
+  .concept h4{margin:0 0 6px;font-size:15px;display:flex;align-items:center;gap:8px;}
+  .concept h4 .pill{font-family:var(--mono);font-size:11px;font-weight:700;padding:2px 7px;border-radius:6px;
+    background:var(--surface);border:1px solid var(--line);color:var(--ink-soft);}
+  .concept p{margin:7px 0;font-size:14.5px;color:#2a3850;}
+  .concept .term{font-weight:800;color:var(--ink);border-bottom:2px solid rgba(108,77,214,.25);}
+  .steps-flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0;font-family:var(--mono);font-size:13px;}
+  .steps-flow .b{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 10px;}
+  .steps-flow .ar{color:var(--ink-soft);font-weight:700;}
+
+  /* ---------- 계산 워크시트 ---------- */
+  .scrollx{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-top:12px;}
+  table.wk{border-collapse:collapse;width:100%;min-width:380px;font-size:14px;}
+  table.wk th,table.wk td{border:1px solid var(--line);padding:7px 6px;text-align:center;}
+  table.wk th{background:var(--surface-2);font-size:12px;color:var(--ink-soft);font-weight:700;}
+  table.wk td.xval{font-family:var(--mono);font-weight:700;font-size:15px;background:#fbfcfe;}
+  table.wk input{width:74px;text-align:center;padding:6px 4px;font-size:14px;}
+  table.wk tfoot td{background:var(--surface-2);font-weight:700;}
+  .given{display:inline-flex;align-items:baseline;gap:8px;background:rgba(108,77,214,.08);
+    border:1px solid rgba(108,77,214,.25);border-radius:10px;padding:8px 14px;margin:4px 0;}
+  .given .lab{font-size:12px;color:var(--ink-soft);font-weight:700;}
+  .given .val{font-family:var(--mono);font-size:20px;font-weight:600;color:var(--spread);}
+  .chip.hi{background:var(--median);color:#fff;border-color:var(--median);box-shadow:0 4px 12px -4px rgba(14,156,138,.6);}
+  .chip.toggle{cursor:pointer;user-select:none;}
+  .chip.toggle.on{background:var(--mean);color:#fff;border-color:var(--mean);}
+  .wkmsg{margin-top:12px;font-size:14px;border-radius:10px;padding:10px 12px;display:none;}
+  .wkmsg.show{display:block;}
+  .wkmsg.good{background:rgba(31,157,87,.08);color:#14713f;border:1px solid rgba(31,157,87,.3);}
+  .wkmsg.bad{background:rgba(210,69,59,.07);color:#9c2c24;border:1px solid rgba(210,69,59,.3);}
+
+  /* ---------- 팡파레 / 컨페티 ---------- */
+  #fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:9998;}
+  .toast{position:fixed;left:50%;top:70px;transform:translateX(-50%) translateY(-14px) scale(.9);
+    background:var(--ink);color:#fff;padding:11px 22px;border-radius:999px;font-weight:800;font-size:15px;
+    box-shadow:0 16px 40px -12px rgba(21,35,62,.55);opacity:0;z-index:9999;transition:.34s cubic-bezier(.2,1.3,.4,1);
+    white-space:nowrap;pointer-events:none;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0) scale(1);}
+  @keyframes popdot{0%{transform:scale(.4)}60%{transform:scale(1.35)}100%{transform:scale(1)}}
+  .step.done .dot{animation:popdot .42s ease;}
+  .mute{padding:5px 10px;font-size:13px;line-height:1;border-radius:9px;}
+</style>
+</head>
+<body>
+<canvas id="fx" aria-hidden="true"></canvas>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- 진행바 -->
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">기초 통계량 실험실 <small>· 숫자로 데이터 읽기</small></div>
+    <nav class="steps" id="steps"></nav>
+    <button class="mute" id="muteBtn" aria-label="효과음 켜기/끄기">🔊 효과음</button>
+    <div class="progress-meter" id="meter">0 / 5 완료</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- 히어로 -->
+  <header class="hero">
+    <div class="eyebrow">descriptive statistics</div>
+    <h1>수십, 수백 개의 숫자를<br><span class="ink-mean">한 줄</span>로 요약하면<br><span class="ink-spread">데이터가 보인다</span></h1>
+    <p class="lead">자료를 일일이 들여다볼 수는 없습니다. 그래서 우리는 자료의 <b>중심</b>과 <b>퍼짐</b>을 몇 개의 숫자로 압축합니다. 직접 값을 바꿔 보고, 손으로 계산해 검증하고, 마지막에 20문제로 확인해 보세요.</p>
+
+    <div class="hook">
+      <h3>먼저 질문 하나 — 두 반 중 어느 반이 더 "고르게" 공부했을까요?</h3>
+      <p class="muted">두 반 모두 평균 점수는 <b>같습니다(70점)</b>. 그런데 느낌이 다릅니다.</p>
+      <div class="twocol">
+        <div class="minicard">
+          <div class="label">1반 점수</div>
+          <div class="nums">68 · 70 · 72 · 69 · 71</div>
+        </div>
+        <div class="minicard">
+          <div class="label">2반 점수</div>
+          <div class="nums">40 · 95 · 55 · 90 · 70</div>
+        </div>
+      </div>
+      <div class="reveal">
+        평균만 보면 두 반은 똑같습니다. 하지만 2반은 점수가 사방으로 흩어져 있죠. <b>평균(중심)</b> 하나로는 이 차이를 잡아낼 수 없습니다. 그래서 <b>표준편차(퍼짐)</b> 같은 값이 필요합니다. 이 페이지에서 그 이유를 하나씩 만져 보겠습니다.
+      </div>
+    </div>
+  </header>
+
+  <!-- 1. 중심 -->
+  <section class="block" id="s1">
+    <div class="sec-head">
+      <div class="sec-no">01</div>
+      <div>
+        <h2>자료의 <span style="color:var(--mean)">중심</span>을 나타내는 값</h2>
+        <p>평균 · 중앙값 · 최빈값 — "이 자료를 대표하는 한 값은?"에 답하는 세 가지 방법</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>먼저 개념부터 — 중앙값(median)이란? <span class="tag median">중앙값</span></h3>
+      <div class="concept cool">
+        <h4>📍 한 줄 정의 <span class="pill">median</span></h4>
+        <p>자료를 <span class="term">크기순으로 줄 세웠을 때, 정확히 한가운데에 있는 값</span>이에요. "키 순서로 줄 선 반에서 맨 가운데 친구"를 떠올리면 됩니다.</p>
+        <p>구하는 순서는 딱 두 단계예요.</p>
+        <div class="steps-flow">
+          <span class="b">① 작은 값 → 큰 값으로 정렬</span><span class="ar">→</span>
+          <span class="b">② 한가운데 값 고르기</span>
+        </div>
+        <p>이때 자료 <span class="term">개수가 홀수면</span> 가운데 값이 딱 하나라 그 값이 중앙값이고, <span class="term">개수가 짝수면</span> 가운데에 값이 두 개 걸리니까 <b>그 둘의 평균</b>을 중앙값으로 삼습니다.</p>
+        <p>💛 평균과 달리 중앙값은 <b>아주 크거나 작은 값(이상치)에 흔들리지 않아요.</b> 그래서 소득·집값처럼 한쪽으로 길게 늘어진 자료에서 "보통값"을 말할 때 특히 든든합니다.</p>
+      </div>
+
+      <h3 style="margin-top:18px">직접 연습 — 정렬하고 한가운데 찾기</h3>
+      <p class="muted">버튼을 차례로 눌러 두 단계를 눈으로 확인하고, 중앙값을 직접 입력해 맞혀 보세요.</p>
+      <div id="med-prac"></div>
+    </div>
+
+    <div class="card">
+      <h3>실험실: 점을 추가/삭제하며 대푯값이 어떻게 움직이는지 보기 <span class="tag mean">중심값</span></h3>
+      <p class="muted">아래 수직선 위 점들이 자료입니다. 값을 더하거나 빼면 <span style="color:var(--mean);font-weight:700">평균선(빨강)</span>과 <span style="color:var(--median);font-weight:700">중앙값선(청록)</span>이 실시간으로 움직입니다.</p>
+
+      <div class="stat-row">
+        <div class="stat"><div class="k"><span class="swatch sw-mean"></span>평균 (mean)</div><div class="v" id="ct-mean">–</div></div>
+        <div class="stat"><div class="k"><span class="swatch sw-median"></span>중앙값 (median)</div><div class="v" id="ct-median">–</div></div>
+        <div class="stat"><div class="k">최빈값 (mode)</div><div class="v" id="ct-mode">–</div></div>
+      </div>
+
+      <div class="viz"><svg id="ct-svg" viewBox="0 0 720 200" role="img" aria-label="자료 점 분포와 평균·중앙값 선"></svg></div>
+      <div class="legend">
+        <span><span class="swatch sw-mean"></span>평균 = 모든 값을 더해 개수로 나눈 값(무게중심)</span>
+        <span><span class="swatch sw-median"></span>중앙값 = 크기순 정렬 후 한가운데 값</span>
+      </div>
+
+      <div class="chips" id="ct-chips" aria-label="현재 자료값 목록"></div>
+      <div class="ctl">
+        <input type="number" id="ct-input" placeholder="값 입력 후 Enter" style="max-width:170px" aria-label="추가할 값" />
+        <button id="ct-add" class="primary">＋ 값 추가</button>
+        <button id="ct-outlier" class="warn">이상치(아주 큰 값) 넣어보기</button>
+        <button id="ct-reset">처음으로</button>
+      </div>
+      <p class="muted" style="margin-top:12px">💡 <b>이상치</b> 버튼을 눌러 보세요. <b>평균선은 이상치 쪽으로 확 끌려가지만, 중앙값선은 거의 안 움직입니다.</b> 그래서 한쪽으로 치우치거나 튀는 값이 있는 자료(소득, 집값 등)에서는 평균보다 중앙값이 "보통값"을 더 잘 대표합니다.</p>
+
+      <div class="quizlet" data-quizlet="1">
+        <div class="q">확인 1. 자료 <b>[3, 4, 4, 5, 100]</b> 에서 "대부분의 값"을 가장 잘 대표하는 대푯값은?</div>
+        <div class="opts">
+          <div class="opt" data-correct="0"><span class="mk">A</span><span>평균 — 모든 값을 반영하니까</span></div>
+          <div class="opt" data-correct="1"><span class="mk">B</span><span>중앙값 — 이상치 100의 영향을 거의 안 받으니까</span></div>
+          <div class="opt" data-correct="0"><span class="mk">C</span><span>최댓값 — 가장 큰 값이 대표하니까</span></div>
+        </div>
+        <div class="feedback"></div>
+      </div>
+
+      <label class="step" style="cursor:pointer;margin-top:14px;display:inline-flex" data-check="s1">
+        <span class="dot"></span> 이 단원을 이해했어요 (체크)
+      </label>
+    </div>
+  </section>
+
+  <!-- 2. 퍼짐 -->
+  <section class="block" id="s2">
+    <div class="sec-head">
+      <div class="sec-no">02</div>
+      <div>
+        <h2>자료의 <span style="color:var(--spread)">퍼짐</span>을 나타내는 값</h2>
+        <p>범위 · 분산 · 표준편차 · 사분위수 — "값들이 중심에서 얼마나 흩어져 있나?"</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>먼저 개념부터 — 편차 · 분산 · 표준편차 <span class="tag spread">산포</span></h3>
+      <div class="concept">
+        <h4>📍 편차(deviation) <span class="pill">x − 평균</span></h4>
+        <p><span class="term">편차</span>는 각 값이 평균에서 얼마나 떨어져 있는지예요. 그냥 <b>값 − 평균</b>이죠. 평균보다 크면 +, 작으면 −가 됩니다.</p>
+        <p>그런데 편차를 전부 더하면 항상 <b>0</b>이 돼요(+와 −가 정확히 상쇄되거든요). 그래서 "흩어진 정도"를 재려면 부호를 없애야 하는데, 그 방법이 <b>제곱</b>입니다.</p>
+      </div>
+      <div class="concept">
+        <h4>📍 분산(variance) <span class="pill">편차²의 평균</span></h4>
+        <p><span class="term">분산</span>은 <b>편차를 제곱해서 모두 더한 뒤, 자료 개수로 나눈 값</b>이에요. 값들이 평균에서 멀리 흩어질수록 커집니다.</p>
+        <div class="formula">분산 = { (x₁−평균)² + (x₂−평균)² + ⋯ } ÷ n</div>
+        <p>단점이 하나 있어요. 제곱을 했으니 단위도 제곱이 됩니다(점 → 점²). "흩어진 정도가 4점²"이라고 하면 영 와닿지 않죠.</p>
+      </div>
+      <div class="concept warm">
+        <h4>📍 표준편차(standard deviation) <span class="pill">√분산</span></h4>
+        <p>그래서 분산에 <b>제곱근</b>을 씌워 단위를 원래대로(점² → 점) 되돌린 값이 <span class="term">표준편차</span>예요. 가장 자주 쓰는 산포의 척도입니다.</p>
+        <p>읽는 법이 직관적이에요. 표준편차가 <b>3점</b>이라면 "값들이 평균에서 <b>평균적으로 ±3점쯤</b> 떨어져 있다"는 뜻이거든요. 작을수록 옹기종기 모여 있고, 클수록 넓게 퍼져 있습니다.</p>
+        <div class="steps-flow">
+          <span class="b">① 평균</span><span class="ar">→</span>
+          <span class="b">② 편차(값−평균)</span><span class="ar">→</span>
+          <span class="b">③ 편차²</span><span class="ar">→</span>
+          <span class="b">④ 합 ÷ n = 분산</span><span class="ar">→</span>
+          <span class="b">⑤ √분산 = 표준편차</span>
+        </div>
+      </div>
+
+      <h3 style="margin-top:18px">직접 연습 — 표를 채우며 표준편차까지 구하기</h3>
+      <p class="muted">평균은 미리 알려 드릴게요. 각 칸에 <b>편차</b>와 <b>편차²</b>을 채우고, 아래에서 분산·표준편차를 완성한 뒤 채점해 보세요.</p>
+      <div id="var-prac"></div>
+    </div>
+
+    <div class="card">
+      <h3>실험실 A: 퍼짐을 키우면 표준편차가 어떻게 변할까 <span class="tag spread">표준편차</span></h3>
+      <p class="muted">평균은 <b>50으로 고정</b>한 채, 슬라이더로 자료가 흩어진 정도만 바꿉니다. 막대(분포)가 넓게 퍼질수록 표준편차가 커집니다.</p>
+      <div class="stat-row">
+        <div class="stat"><div class="k">평균</div><div class="v" id="sp-mean">50</div></div>
+        <div class="stat"><div class="k">분산 (variance)</div><div class="v" id="sp-var">–</div></div>
+        <div class="stat"><div class="k"><span class="swatch sw-spread"></span>표준편차 (s)</div><div class="v" id="sp-std">–</div></div>
+      </div>
+      <div class="viz"><svg id="sp-svg" viewBox="0 0 720 240" role="img" aria-label="퍼짐 정도에 따른 분포 막대그래프"></svg></div>
+      <div class="ctl" style="flex-direction:column;align-items:stretch">
+        <label class="muted" for="sp-range" style="font-weight:700">흩어진 정도: <span id="sp-rangeval" class="kbd">보통</span></label>
+        <input type="range" id="sp-range" min="0" max="100" value="40" />
+      </div>
+      <div class="formula">분산 = (편차)²의 평균 = Σ(xᵢ − 평균)² ÷ n &nbsp;|&nbsp; 표준편차 = √분산</div>
+      <p class="muted">📌 <b>편차</b>는 각 값이 평균에서 떨어진 거리(값 − 평균)입니다. 그냥 더하면 0이 되니까, <b>제곱</b>해서 더한 뒤 평균 낸 것이 분산입니다. 분산은 단위가 제곱(점²)이라 감이 안 와서, 다시 <b>제곱근</b>을 씌워 원래 단위로 되돌린 것이 <b>표준편차</b>입니다. 그래서 표준편차는 "값들이 평균에서 평균적으로 ± 얼마나 떨어져 있나"로 읽습니다.</p>
+    </div>
+
+    <div class="card">
+      <h3>먼저 개념부터 — 사분위수 · IQR · 펜스 <span class="tag spread">IQR</span></h3>
+      <div class="concept">
+        <h4>📍 사분위수(quartile) <span class="pill">Q1 · Q2 · Q3</span></h4>
+        <p>자료를 크기순으로 줄 세운 뒤 <span class="term">4등분</span>하는 세 경계예요.</p>
+        <p><b>Q2</b>는 한가운데 = <b>중앙값</b>이에요. <b>Q1</b>은 아래쪽 절반의 중앙값(전체의 25% 지점), <b>Q3</b>은 위쪽 절반의 중앙값(75% 지점)입니다.</p>
+        <div class="steps-flow">
+          <span class="b">정렬</span><span class="ar">→</span>
+          <span class="b">Q2 = 전체 중앙값</span><span class="ar">→</span>
+          <span class="b">Q1 = 아래 절반의 중앙값</span><span class="ar">→</span>
+          <span class="b">Q3 = 위 절반의 중앙값</span>
+        </div>
+      </div>
+      <div class="concept">
+        <h4>📍 IQR(사분위범위) <span class="pill">Q3 − Q1</span></h4>
+        <p><span class="term">IQR</span>은 Q3에서 Q1을 뺀 값으로, <b>가운데 50% 자료가 퍼져 있는 폭</b>이에요. 양 끝의 극단값을 빼고 "중심부가 얼마나 모여 있나"를 보는 거라, 이상치에 휘둘리지 않는 든든한 산포 척도입니다.</p>
+      </div>
+      <div class="concept warm">
+        <h4>📍 펜스(fence)와 이상치(outlier) <span class="pill">Q ± 1.5·IQR</span></h4>
+        <p>어디까지를 "정상 범위"로 볼지 울타리를 치는 거예요. 이 울타리를 <span class="term">펜스</span>라고 합니다.</p>
+        <div class="formula">아래 펜스 = Q1 − 1.5 × IQR &nbsp;|&nbsp; 위 펜스 = Q3 + 1.5 × IQR</div>
+        <p>이 <b>펜스 바깥으로 벗어난 값</b>을 <span class="term">이상치</span>로 봅니다. 상자그림에서 수염은 펜스 안쪽 끝값까지만 뻗고, 그 너머의 값은 점으로 따로 찍어요.</p>
+        <p>예를 들어 Q1=10, Q3=20이면 IQR=10, 펜스는 10−15=−5와 20+15=35. 즉 <b>−5보다 작거나 35보다 큰 값</b>이 이상치가 됩니다.</p>
+      </div>
+
+      <h3 style="margin-top:18px">직접 연습 — Q1·Q3·IQR·펜스로 이상치 찾기</h3>
+      <p class="muted">정렬된 자료를 보고 사분위수와 펜스를 구한 뒤, 펜스 밖의 값(이상치)을 골라 채점해 보세요.</p>
+      <div id="fence-prac"></div>
+    </div>
+
+    <div class="card">
+      <h3>실험실 B: 사분위수와 상자그림(box plot) <span class="tag spread">IQR</span></h3>
+      <p class="muted">자료를 4등분하는 경계가 사분위수입니다. 값을 바꾸면 상자그림이 다시 그려집니다.</p>
+      <div class="stat-row">
+        <div class="stat"><div class="k">Q1 (1사분위)</div><div class="v" id="bx-q1">–</div></div>
+        <div class="stat"><div class="k">Q2 (중앙값)</div><div class="v" id="bx-q2">–</div></div>
+        <div class="stat"><div class="k">Q3 (3사분위)</div><div class="v" id="bx-q3">–</div></div>
+        <div class="stat"><div class="k">IQR = Q3−Q1</div><div class="v" id="bx-iqr">–</div></div>
+      </div>
+      <div class="viz"><svg id="bx-svg" viewBox="0 0 720 180" role="img" aria-label="상자그림"></svg></div>
+      <div class="ctl">
+        <input type="text" id="bx-input" value="1, 3, 5, 7, 9, 11, 13, 15" aria-label="상자그림 자료 (쉼표로 구분)" />
+        <button id="bx-apply" class="primary">그리기</button>
+        <button id="bx-ex2">이상치 있는 예시</button>
+      </div>
+      <p class="muted">📦 상자의 <b>길이(IQR)</b>는 가운데 50% 자료가 퍼진 폭입니다. 상자 안 세로선은 <b>중앙값</b>. 수염 밖으로 멀리 떨어진 점(<span style="color:var(--mean);font-weight:700">빨간 점</span>)은 이상치 후보입니다. 표준편차와 달리 IQR은 이상치에 휘둘리지 않아 분포가 치우친 자료에 강합니다.</p>
+
+      <div class="quizlet" data-quizlet="2">
+        <div class="q">확인 2. 두 자료 모두 평균이 50입니다. <b>가</b>=[48,49,50,51,52], <b>나</b>=[10,30,50,70,90]. 표준편차가 더 <b>큰</b> 쪽과 그 의미는?</div>
+        <div class="opts">
+          <div class="opt" data-correct="0"><span class="mk">A</span><span>가 — 값이 더 흩어져 있다</span></div>
+          <div class="opt" data-correct="1"><span class="mk">B</span><span>나 — 값이 평균에서 더 멀리, 더 넓게 흩어져 있다</span></div>
+          <div class="opt" data-correct="0"><span class="mk">C</span><span>평균이 같으므로 표준편차도 같다</span></div>
+        </div>
+        <div class="feedback"></div>
+      </div>
+
+      <label class="step" style="cursor:pointer;margin-top:14px;display:inline-flex" data-check="s2">
+        <span class="dot"></span> 이 단원을 이해했어요 (체크)
+      </label>
+    </div>
+  </section>
+
+  <!-- 3. 검증형 -->
+  <section class="block" id="s3">
+    <div class="sec-head">
+      <div class="sec-no">03</div>
+      <div>
+        <h2>데이터를 직접 <span style="color:var(--gold)">파악</span>해 보기</h2>
+        <p>자료를 보고 손으로 통계량을 구해 입력 → 채점 → 그 숫자가 무엇을 말하는지 해석까지</p>
+      </div>
+    </div>
+    <div id="verify-host"></div>
+    <label class="step" style="cursor:pointer;margin-top:8px;display:inline-flex" data-check="s3">
+      <span class="dot"></span> 세 데이터를 모두 분석해 봤어요 (체크)
+    </label>
+  </section>
+
+  <!-- 4. 형성평가 -->
+  <section class="block" id="s4">
+    <div class="sec-head">
+      <div class="sec-no">04</div>
+      <div>
+        <h2>형성평가 · <span style="color:var(--spread)">20문제</span></h2>
+        <p>개념을 제대로 이해했는지 스스로 점검하세요. 문제마다 바로 채점되고, 풀이가 나옵니다.</p>
+      </div>
+    </div>
+    <div class="card">
+      <p class="muted">선택형은 보기를 고르면 되고, 계산형은 칸에 숫자를 입력합니다. (소수는 둘째 자리까지, 예: <span class="kbd">2.24</span>) 분산·표준편차는 <b>편차 제곱의 평균(÷n)</b> 기준입니다.</p>
+      <div id="exam-host"></div>
+      <div class="exam-actions">
+        <button class="primary" id="exam-grade">전체 채점하기</button>
+        <button id="exam-reset">다시 풀기</button>
+        <div class="scorebar"><i id="exam-bar"></i></div>
+        <div class="scorebig" id="exam-score">– / 20</div>
+      </div>
+    </div>
+    <label class="step" style="cursor:pointer;margin-top:8px;display:inline-flex" data-check="s4">
+      <span class="dot"></span> 형성평가를 끝냈어요 (체크)
+    </label>
+  </section>
+
+  <footer>
+    <p>기초 통계량 실험실 · 평균/중앙값/최빈값 · 범위/분산/표준편차/사분위수<br>
+    진행 상태는 이 창에서만 기억됩니다(새로고침하면 초기화). 자유롭게 여러 번 실험해 보세요.</p>
+  </footer>
+</div>
+
+<script>
+/* ===================== 통계 엔진 ===================== */
+const S = {
+  sum: a => a.reduce((s,x)=>s+x,0),
+  mean: a => a.length? S.sum(a)/a.length : 0,
+  median(a){const s=[...a].sort((x,y)=>x-y),n=s.length,m=Math.floor(n/2);
+    return n? (n%2? s[m] : (s[m-1]+s[m])/2) : 0;},
+  mode(a){const f={};a.forEach(x=>f[x]=(f[x]||0)+1);const vals=Object.values(f);
+    if(a.length && a.length===Object.keys(f).length && vals.every(v=>v===vals[0])) return null;
+    let bc=0,best=[];for(const k in f){if(f[k]>bc){bc=f[k];best=[+k];}else if(f[k]===bc)best.push(+k);}
+    return best.sort((x,y)=>x-y);},
+  range: a => a.length? Math.max(...a)-Math.min(...a):0,
+  variance(a){const m=S.mean(a);return S.mean(a.map(x=>(x-m)**2));},
+  std: a => Math.sqrt(S.variance(a)),
+  quartiles(a){const s=[...a].sort((x,y)=>x-y),n=s.length,mid=Math.floor(n/2);
+    const lo=s.slice(0,mid), hi=n%2===0? s.slice(mid):s.slice(mid+1);
+    return {q1:S.median(lo), q2:S.median(s), q3:S.median(hi)};}
+};
+const r2 = x => Math.round(x*100)/100;
+const fmt = x => Number.isInteger(x)? String(x) : String(r2(x));
+
+/* ===================== 진행 상태 ===================== */
+const STEPS = [
+  {id:'s1', label:'① 중심값'},
+  {id:'s2', label:'② 퍼짐'},
+  {id:'s3', label:'③ 데이터 파악'},
+  {id:'s4', label:'④ 형성평가'},
+];
+const done = {};
+function renderSteps(){
+  const host = document.getElementById('steps'); host.innerHTML='';
+  STEPS.forEach(s=>{
+    const a=document.createElement('a');
+    a.href='#'+s.id; a.className='step'+(done[s.id]?' done':'');
+    a.innerHTML=`<span class="dot"></span>${s.label}`;
+    host.appendChild(a);
+  });
+  const n=Object.values(done).filter(Boolean).length;
+  document.getElementById('meter').textContent=`${n} / ${STEPS.length} 완료`;
+}
+function setDone(id,val){done[id]=val;renderSteps();
+  document.querySelectorAll(`[data-check="${id}"]`).forEach(el=>el.classList.toggle('done',val));
+  if(val) celebrate('단원 완료! 🎉');}
+document.querySelectorAll('[data-check]').forEach(el=>{
+  el.addEventListener('click',()=>setDone(el.dataset.check, !done[el.dataset.check]));
+});
+renderSteps();
+
+/* ===================== 이해 체크(객관식) 공통 ===================== */
+function wireQuizlet(node, explain){
+  const opts=node.querySelectorAll('.opt');
+  const fb=node.querySelector('.feedback');
+  opts.forEach(o=>o.addEventListener('click',()=>{
+    opts.forEach(x=>x.classList.remove('sel','correct','wrong'));
+    const ok=o.dataset.correct==='1';
+    o.classList.add('sel', ok?'correct':'wrong');
+    if(!ok) node.querySelector('.opt[data-correct="1"]').classList.add('correct');
+    fb.className='feedback show '+(ok?'good':'bad');
+    fb.innerHTML=(ok?'✓ 정확해요. ':'✗ 다시 볼까요. ')+explain;
+  }));
+}
+wireQuizlet(document.querySelector('[data-quizlet="1"]'),
+  '<b>중앙값</b>은 크기순 가운데 값이라 100 같은 이상치가 끼어도 거의 흔들리지 않습니다. 평균은 100에 끌려 22가 넘어가 버려 "대부분의 값(3~5)"과 동떨어집니다.');
+wireQuizlet(document.querySelector('[data-quizlet="2"]'),
+  '<b>나</b>가 더 큽니다. 값들이 평균 50에서 ±40까지 멀리 퍼져 있어 편차가 크고, 따라서 표준편차도 큽니다. 평균이 같아도 퍼짐은 전혀 다를 수 있습니다.');
+
+/* ===================== 1. 중심값 실험실 ===================== */
+let ctData=[6,7,8,9,10];
+const ctSvg=document.getElementById('ct-svg');
+function drawCT(){
+  const a=ctData;
+  document.getElementById('ct-mean').textContent = a.length? fmt(S.mean(a)) : '–';
+  document.getElementById('ct-median').textContent = a.length? fmt(S.median(a)) : '–';
+  const md=S.mode(a);
+  document.getElementById('ct-mode').textContent = a.length? (md? md.join(', ') : '없음') : '–';
+
+  // chips
+  const chips=document.getElementById('ct-chips'); chips.innerHTML='';
+  [...a].sort((x,y)=>x-y).forEach((v)=>{
+    const idx=ctData.indexOf(v);
+    const c=document.createElement('span'); c.className='chip';
+    c.innerHTML=`${v}<button aria-label="${v} 삭제">×</button>`;
+    c.querySelector('button').onclick=()=>{ctData.splice(idx,1);drawCT();};
+    chips.appendChild(c);
+  });
+
+  // svg dot plot
+  const W=720,H=200,padL=40,padR=40,axisY=140;
+  let lo=Math.min(...a), hi=Math.max(...a);
+  if(!a.length){lo=0;hi=10;}
+  if(lo===hi){lo-=1;hi+=1;}
+  const span=hi-lo, pad=span*0.12||1; lo-=pad; hi+=pad;
+  const X=v=> padL+(v-lo)/(hi-lo)*(W-padL-padR);
+  let s=`<rect x="0" y="0" width="${W}" height="${H}" fill="transparent"/>`;
+  // axis
+  s+=`<line x1="${padL}" y1="${axisY}" x2="${W-padR}" y2="${axisY}" stroke="#C2CCDB" stroke-width="2"/>`;
+  // ticks
+  const ticks=5;
+  for(let i=0;i<=ticks;i++){const v=lo+(hi-lo)*i/ticks;const x=X(v);
+    s+=`<line x1="${x}" y1="${axisY}" x2="${x}" y2="${axisY+5}" stroke="#C2CCDB" stroke-width="1.5"/>`;
+    s+=`<text x="${x}" y="${axisY+20}" text-anchor="middle" font-size="11" fill="#5C6B85" font-family="monospace">${r2(v)}</text>`;}
+  // dots (stack duplicates)
+  const counts={};
+  [...a].sort((x,y)=>x-y).forEach(v=>{counts[v]=(counts[v]||0)+1;
+    const x=X(v), k=counts[v], y=axisY-12-(k-1)*16;
+    s+=`<circle cx="${x}" cy="${y}" r="6.5" fill="#15233E" opacity="0.82"/>`;});
+  if(a.length){
+    const mx=X(S.mean(a)), dx=X(S.median(a));
+    s+=`<line x1="${mx}" y1="18" x2="${mx}" y2="${axisY}" stroke="#E5533D" stroke-width="2.5" stroke-dasharray="2 0"/>`;
+    s+=`<text x="${mx}" y="14" text-anchor="middle" font-size="12" font-weight="700" fill="#E5533D" font-family="monospace">평균 ${fmt(S.mean(a))}</text>`;
+    s+=`<line x1="${dx}" y1="30" x2="${dx}" y2="${axisY}" stroke="#0E9C8A" stroke-width="2.5"/>`;
+    s+=`<text x="${dx}" y="${axisY+38}" text-anchor="middle" font-size="12" font-weight="700" fill="#0E9C8A" font-family="monospace">중앙값 ${fmt(S.median(a))}</text>`;
+  }
+  ctSvg.innerHTML=s;
+}
+function ctAdd(){const v=parseFloat(document.getElementById('ct-input').value);
+  if(!isNaN(v)){ctData.push(v);document.getElementById('ct-input').value='';drawCT();}}
+document.getElementById('ct-add').onclick=ctAdd;
+document.getElementById('ct-input').addEventListener('keydown',e=>{if(e.key==='Enter')ctAdd();});
+document.getElementById('ct-outlier').onclick=()=>{const m=ctData.length?Math.max(...ctData):10;ctData.push(m+90);drawCT();};
+document.getElementById('ct-reset').onclick=()=>{ctData=[6,7,8,9,10];drawCT();};
+drawCT();
+
+/* ===================== 2A. 퍼짐 슬라이더 ===================== */
+const baseOffsets=[-5,-4,-3,-2,-1,0,0,1,2,3,4,5,-2,2,0]; // 평균0 형태
+const spSvg=document.getElementById('sp-svg');
+function spData(spread){ // spread 0~3
+  return baseOffsets.map(o=>Math.round(50+o*spread));
+}
+function drawSP(){
+  const t=+document.getElementById('sp-range').value/100; // 0~1
+  const spread=t*3; // 0~3 배율
+  const data=spData(spread);
+  const v=S.variance(data), sd=S.std(data);
+  document.getElementById('sp-var').textContent=fmt(v);
+  document.getElementById('sp-std').textContent=fmt(sd);
+  document.getElementById('sp-rangeval').textContent = t<0.2?'아주 좁음': t<0.45?'좁음': t<0.7?'보통': t<0.9?'넓음':'아주 넓음';
+
+  // histogram
+  const W=720,H=240,padL=40,padR=20,padB=44,padT=14;
+  const lo=20,hi=80,bins=12,bw=(hi-lo)/bins;
+  const cnt=new Array(bins).fill(0);
+  data.forEach(x=>{let b=Math.floor((x-lo)/bw);b=Math.max(0,Math.min(bins-1,b));cnt[b]++;});
+  const maxc=Math.max(...cnt,1);
+  const plotW=W-padL-padR, plotH=H-padB-padT;
+  let s=`<rect width="${W}" height="${H}" fill="transparent"/>`;
+  s+=`<line x1="${padL}" y1="${H-padB}" x2="${W-padR}" y2="${H-padB}" stroke="#C2CCDB" stroke-width="2"/>`;
+  for(let i=0;i<bins;i++){
+    const x=padL+i/bins*plotW, w=plotW/bins-3, h=cnt[i]/maxc*plotH, y=H-padB-h;
+    s+=`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="#6C4DD6" opacity="${0.35+0.5*cnt[i]/maxc}"/>`;
+  }
+  // mean line at 50
+  const X=val=>padL+(val-lo)/(hi-lo)*plotW;
+  const mx=X(50);
+  s+=`<line x1="${mx}" y1="${padT}" x2="${mx}" y2="${H-padB}" stroke="#E5533D" stroke-width="2.5"/>`;
+  s+=`<text x="${mx}" y="${padT+2}" text-anchor="middle" font-size="11" fill="#E5533D" font-weight="700" font-family="monospace">평균 50</text>`;
+  // ±1 std band
+  const lx=X(50-sd), rx=X(50+sd);
+  s+=`<rect x="${lx}" y="${padT}" width="${rx-lx}" height="${plotH}" fill="#6C4DD6" opacity="0.08"/>`;
+  s+=`<line x1="${lx}" y1="${H-padB}" x2="${lx}" y2="${H-padB+8}" stroke="#6C4DD6" stroke-width="2"/>`;
+  s+=`<line x1="${rx}" y1="${H-padB}" x2="${rx}" y2="${H-padB+8}" stroke="#6C4DD6" stroke-width="2"/>`;
+  s+=`<text x="${(lx+rx)/2}" y="${H-padB+22}" text-anchor="middle" font-size="11" fill="#6C4DD6" font-weight="700" font-family="monospace">평균 ± 표준편차(${fmt(sd)})</text>`;
+  for(let val=20;val<=80;val+=10){const x=X(val);
+    s+=`<text x="${x}" y="${H-padB+22}" text-anchor="middle" font-size="10" fill="#9aa6ba" font-family="monospace" opacity="${val===50||val===20||val===80?0:1}">${val}</text>`;}
+  spSvg.innerHTML=s;
+}
+document.getElementById('sp-range').addEventListener('input',drawSP);
+drawSP();
+
+/* ===================== 2B. 상자그림 ===================== */
+const bxSvg=document.getElementById('bx-svg');
+function parseList(str){return str.split(/[,\s]+/).map(Number).filter(x=>!isNaN(x));}
+function drawBX(){
+  const a=parseList(document.getElementById('bx-input').value);
+  if(a.length<2){bxSvg.innerHTML='';return;}
+  const q=S.quartiles(a), iqr=q.q3-q.q1;
+  document.getElementById('bx-q1').textContent=fmt(q.q1);
+  document.getElementById('bx-q2').textContent=fmt(q.q2);
+  document.getElementById('bx-q3').textContent=fmt(q.q3);
+  document.getElementById('bx-iqr').textContent=fmt(iqr);
+
+  const loF=q.q1-1.5*iqr, hiF=q.q3+1.5*iqr;
+  const inliers=a.filter(x=>x>=loF&&x<=hiF), outliers=a.filter(x=>x<loF||x>hiF);
+  const whiskLo=Math.min(...inliers), whiskHi=Math.max(...inliers);
+
+  const W=720,H=180,padL=44,padR=44,cy=78;
+  let lo=Math.min(...a), hi=Math.max(...a); const span=hi-lo||1; lo-=span*0.08; hi+=span*0.08;
+  const X=v=>padL+(v-lo)/(hi-lo)*(W-padL-padR);
+  let s=`<rect width="${W}" height="${H}" fill="transparent"/>`;
+  // axis
+  s+=`<line x1="${padL}" y1="${130}" x2="${W-padR}" y2="${130}" stroke="#C2CCDB" stroke-width="1.5"/>`;
+  for(let i=0;i<=5;i++){const v=lo+(hi-lo)*i/5,x=X(v);
+    s+=`<line x1="${x}" y1="130" x2="${x}" y2="135" stroke="#C2CCDB"/>`;
+    s+=`<text x="${x}" y="150" text-anchor="middle" font-size="10" fill="#5C6B85" font-family="monospace">${r2(v)}</text>`;}
+  // whiskers
+  s+=`<line x1="${X(whiskLo)}" y1="${cy}" x2="${X(q.q1)}" y2="${cy}" stroke="#15233E" stroke-width="2"/>`;
+  s+=`<line x1="${X(q.q3)}" y1="${cy}" x2="${X(whiskHi)}" y2="${cy}" stroke="#15233E" stroke-width="2"/>`;
+  s+=`<line x1="${X(whiskLo)}" y1="${cy-12}" x2="${X(whiskLo)}" y2="${cy+12}" stroke="#15233E" stroke-width="2"/>`;
+  s+=`<line x1="${X(whiskHi)}" y1="${cy-12}" x2="${X(whiskHi)}" y2="${cy+12}" stroke="#15233E" stroke-width="2"/>`;
+  // box
+  const bx=X(q.q1), bw=X(q.q3)-X(q.q1);
+  s+=`<rect x="${bx}" y="${cy-26}" width="${bw}" height="52" rx="6" fill="#6C4DD6" opacity="0.16" stroke="#6C4DD6" stroke-width="2"/>`;
+  // median
+  s+=`<line x1="${X(q.q2)}" y1="${cy-26}" x2="${X(q.q2)}" y2="${cy+26}" stroke="#0E9C8A" stroke-width="3"/>`;
+  // outliers
+  outliers.forEach(o=>{s+=`<circle cx="${X(o)}" cy="${cy}" r="5" fill="#E5533D"/>`;});
+  // labels
+  s+=`<text x="${X(q.q1)}" y="${cy-34}" text-anchor="middle" font-size="11" fill="#6C4DD6" font-weight="700" font-family="monospace">Q1 ${fmt(q.q1)}</text>`;
+  s+=`<text x="${X(q.q3)}" y="${cy-34}" text-anchor="middle" font-size="11" fill="#6C4DD6" font-weight="700" font-family="monospace">Q3 ${fmt(q.q3)}</text>`;
+  s+=`<text x="${X(q.q2)}" y="${cy+44}" text-anchor="middle" font-size="11" fill="#0E9C8A" font-weight="700" font-family="monospace">중앙값 ${fmt(q.q2)}</text>`;
+  bxSvg.innerHTML=s;
+}
+document.getElementById('bx-apply').onclick=drawBX;
+document.getElementById('bx-input').addEventListener('keydown',e=>{if(e.key==='Enter')drawBX();});
+document.getElementById('bx-ex2').onclick=()=>{document.getElementById('bx-input').value='2, 4, 5, 6, 7, 8, 9, 40';drawBX();};
+drawBX();
+
+/* ===================== 3. 검증형 연습 ===================== */
+const verifyData=[
+  {
+    title:'데이터 1 · 쪽지시험 점수(5명)',
+    ctx:'어느 모둠 5명의 10점 만점 쪽지시험 점수입니다.',
+    data:[7,8,9,10,6],
+    fields:[
+      {key:'mean',label:'평균',calc:a=>S.mean(a)},
+      {key:'median',label:'중앙값',calc:a=>S.median(a)},
+      {key:'range',label:'범위',calc:a=>S.range(a)},
+      {key:'std',label:'표준편차',calc:a=>S.std(a)},
+    ],
+    interpret:`<p><b>평균 8점, 중앙값 8점</b>으로 거의 일치합니다. 자료가 한쪽으로 치우치지 않고 고르게 분포한다는 신호예요.</p>
+    <p><b>표준편차 약 1.41점</b>은 "점수가 평균(8점)에서 평균적으로 1.4점 정도 떨어져 있다"는 뜻입니다. 만점 기준으로 보면 매우 안정적으로 비슷하게 맞힌 모둠입니다.</p>`
+  },
+  {
+    title:'데이터 2 · 카페 일주일 방문자 수',
+    ctx:'한 카페의 7일간 일별 방문자 수입니다. 하루는 특별 이벤트가 있었어요.',
+    data:[40,42,38,45,40,300,41],
+    fields:[
+      {key:'mean',label:'평균',calc:a=>S.mean(a)},
+      {key:'median',label:'중앙값',calc:a=>S.median(a)},
+      {key:'mode',label:'최빈값',calc:a=>S.mode(a)[0]},
+      {key:'max',label:'최댓값',calc:a=>Math.max(...a)},
+    ],
+    interpret:`<p><b>평균은 78명</b>인데 <b>실제 6일은 38~45명</b> 수준이죠. 이벤트 날의 <b>300명(이상치)</b>이 평균을 혼자 끌어올린 겁니다.</p>
+    <p>이럴 때 "평소 방문자"를 묻는다면 평균보다 <b>중앙값 41명</b>이 훨씬 정직합니다. <b>이상치가 있으면 평균은 왜곡되고, 중앙값이 대표값으로 더 적절</b>하다는 걸 보여주는 사례입니다.</p>`
+  },
+  {
+    title:'데이터 3 · 농구선수 8경기 득점',
+    ctx:'한 선수의 최근 8경기 득점 기록입니다.',
+    data:[12,15,18,11,20,14,16,22],
+    fields:[
+      {key:'mean',label:'평균',calc:a=>S.mean(a)},
+      {key:'median',label:'중앙값',calc:a=>S.median(a)},
+      {key:'std',label:'표준편차',calc:a=>S.std(a)},
+      {key:'iqr',label:'IQR(Q3−Q1)',calc:a=>{const q=S.quartiles(a);return q.q3-q.q1;}},
+    ],
+    interpret:`<p><b>평균 16점, 중앙값 15.5점</b>으로 비슷해 분포가 균형적입니다. <b>표준편차 약 3.57점</b>은 경기마다 평균에서 ±3.6점쯤 오르내린다는 뜻으로, 기복이 아주 크지는 않습니다.</p>
+    <p><b>IQR 6점</b>은 가운데 4경기(전형적인 경기들)가 6점 폭 안에 모여 있음을 의미합니다. "이 선수는 보통 13~19점대를 안정적으로 넣는다"고 해석할 수 있습니다.</p>`
+  }
+];
+
+function buildVerify(){
+  const host=document.getElementById('verify-host');
+  verifyData.forEach((d,di)=>{
+    const card=document.createElement('div'); card.className='card';
+    card.innerHTML=`<h3>${d.title}</h3>
+      <p class="muted">${d.ctx}</p>
+      <div class="chips" style="margin:10px 0">${d.data.map(v=>`<span class="chip">${v}</span>`).join('')}</div>
+      <div class="verify-grid"></div>
+      <div class="ctl"><button class="primary" data-act="check">검증하기</button>
+        <button data-act="hint">정답 보기 / 해석</button></div>
+      <div class="interpret"><h4>// 이 숫자들이 말하는 것</h4>${d.interpret}</div>`;
+    const grid=card.querySelector('.verify-grid');
+    d.fields.forEach(f=>{
+      const tgt=r2(f.calc(d.data));
+      const w=document.createElement('div'); w.className='vfield';
+      w.innerHTML=`<label>${f.label}<span class="res"></span></label>
+        <input type="number" step="any" placeholder="값 입력" data-target="${tgt}" aria-label="${d.title} ${f.label}">`;
+      grid.appendChild(w);
+    });
+    const interp=card.querySelector('.interpret');
+    card.querySelector('[data-act="check"]').onclick=()=>{
+      let allok=true;
+      card.querySelectorAll('input').forEach(inp=>{
+        const tgt=parseFloat(inp.dataset.target), val=parseFloat(inp.value);
+        const res=inp.parentElement.querySelector('.res');
+        if(isNaN(val)){inp.classList.remove('ok','no');res.textContent='';allok=false;return;}
+        const ok=Math.abs(val-tgt)<=0.06 || r2(val)===tgt;
+        inp.classList.toggle('ok',ok); inp.classList.toggle('no',!ok);
+        res.textContent=ok?'✓':'정답 '+tgt; res.style.color=ok?'var(--good)':'var(--bad)';
+        if(!ok)allok=false;
+      });
+      if(allok) interp.classList.add('show');
+    };
+    card.querySelector('[data-act="hint"]').onclick=()=>{
+      card.querySelectorAll('input').forEach(inp=>{
+        inp.value=inp.dataset.target;
+        inp.classList.add('ok');
+        const res=inp.parentElement.querySelector('.res');res.textContent='✓';res.style.color='var(--good)';
+      });
+      interp.classList.add('show');
+    };
+    host.appendChild(card);
+  });
+}
+buildVerify();
+
+/* ===================== 4. 형성평가 ===================== */
+const EXAM=[
+  {t:'평균',type:'mc',q:'자료 [3, 5, 7, 9, 11]의 평균은?',
+    opts:['5','7','9','35'],ans:1,exp:'합 35 ÷ 개수 5 = 7.'},
+  {t:'중앙값',type:'mc',q:'중앙값(median)에 대한 설명으로 옳은 것은?',
+    opts:['모든 값을 더해 개수로 나눈 값','가장 자주 나오는 값','크기순으로 정렬했을 때 한가운데 있는 값','최댓값과 최솟값의 차'],ans:2,exp:'중앙값은 정렬 후 가운데 값. 짝수 개면 가운데 두 값의 평균.'},
+  {t:'중앙값',type:'num',q:'자료 [4, 8, 15, 16, 23, 42]의 중앙값은?',ans:15.5,
+    exp:'정렬된 6개의 가운데 두 값 (15+16)/2 = 15.5.'},
+  {t:'최빈값',type:'mc',q:'자료 [2, 3, 3, 5, 7, 7, 7, 8]의 최빈값은?',
+    opts:['3','5','7','없음'],ans:2,exp:'7이 세 번으로 가장 많이 나옴.'},
+  {t:'대표값 선택',type:'mc',q:'소수의 아주 큰 이상치가 섞인 자료에서 "보통값"을 대표하기에 더 적절한 것은?',
+    opts:['평균','중앙값','범위','분산'],ans:1,exp:'중앙값은 이상치의 영향을 거의 받지 않아 치우친 자료에 적절.'},
+  {t:'이상치',type:'num',q:'자료 [10, 12, 11, 13, 100]의 평균은? (소수 첫째 자리까지)',ans:29.2,
+    exp:'합 146 ÷ 5 = 29.2. 그런데 대부분 값은 10~13이라 평균이 자료를 잘 대표하지 못함(중앙값은 12).'},
+  {t:'범위',type:'num',q:'자료 [12, 15, 18, 11, 20, 14, 16, 22]의 범위는?',ans:11,
+    exp:'최댓값 22 − 최솟값 11 = 11.'},
+  {t:'산포 개념',type:'mc',q:'표준편차가 나타내는 것은?',
+    opts:['자료의 한가운데 위치','자료가 평균에서 흩어진 정도','가장 많이 나온 값','자료의 개수'],ans:1,exp:'표준편차는 퍼짐(산포)의 척도. 클수록 평균에서 멀리 흩어짐.'},
+  {t:'분산',type:'num',q:'자료 [1, 2, 3, 4, 5]의 분산은? (편차 제곱의 평균, ÷n)',ans:2,
+    exp:'평균 3, 편차 제곱 [4,1,0,1,4]의 평균 10/5 = 2.'},
+  {t:'표준편차',type:'num',q:'자료 [2, 4, 6, 8]의 표준편차는? (소수 둘째 자리까지)',ans:2.24,
+    exp:'평균 5, 분산 (9+1+1+9)/4 = 5, 표준편차 √5 ≈ 2.24.'},
+  {t:'비교 해석',type:'mc',q:'A·B반 평균은 같고 A반 표준편차가 더 크다. 옳은 해석은?',
+    opts:['A반 점수가 더 고르게 모여 있다','A반 점수가 더 넓게 흩어져 있다','A반 평균이 더 높다','두 반은 완전히 같다'],ans:1,exp:'표준편차가 클수록 평균에서 멀리, 넓게 흩어짐.'},
+  {t:'표준편차',type:'num',q:'자료 [50, 50, 50, 50]의 표준편차는?',ans:0,
+    exp:'모든 값이 같아 편차가 0 → 분산 0 → 표준편차 0. 퍼짐이 전혀 없음.'},
+  {t:'사분위수',type:'num',q:'자료 [1, 3, 5, 7, 9, 11, 13, 15]의 Q1(1사분위수)은?',ans:4,
+    exp:'아래 절반 [1,3,5,7]의 중앙값 (3+5)/2 = 4.'},
+  {t:'사분위수',type:'num',q:'같은 자료 [1, 3, 5, 7, 9, 11, 13, 15]의 Q3(3사분위수)은?',ans:12,
+    exp:'위 절반 [9,11,13,15]의 중앙값 (11+13)/2 = 12.'},
+  {t:'IQR',type:'num',q:'같은 자료에서 IQR(사분위범위)은?',ans:8,
+    exp:'IQR = Q3 − Q1 = 12 − 4 = 8.'},
+  {t:'상자그림',type:'mc',q:'상자그림에서 "상자의 길이"가 나타내는 것은?',
+    opts:['전체 범위(최대−최소)','IQR(가운데 50%가 퍼진 폭)','평균','표준편차'],ans:1,exp:'상자의 양끝은 Q1·Q3, 길이는 IQR. 가운데 절반 자료의 퍼짐.'},
+  {t:'단위',type:'mc',q:'원자료가 "점(점수)" 단위일 때, 원자료와 같은 단위를 갖는 것은?',
+    opts:['분산','표준편차','분산과 표준편차 모두','둘 다 아님'],ans:1,exp:'분산은 제곱 단위(점²), 표준편차는 제곱근이라 원자료와 같은 단위(점).'},
+  {t:'편차',type:'num',q:'학급 키 평균이 160cm일 때, 키가 170cm인 학생의 편차(값−평균)는? (cm)',ans:10,
+    exp:'편차 = 170 − 160 = 10cm. 평균보다 10cm 큼.'},
+  {t:'성질',type:'mc',q:'모든 값에 똑같이 +5를 더하면?',
+    opts:['평균 +5, 표준편차도 +5','평균 +5, 표준편차는 그대로','평균 그대로, 표준편차 +5','둘 다 그대로'],ans:1,exp:'전체를 같은 값만큼 평행이동하면 중심은 +5, 서로 간 거리(퍼짐)는 변하지 않음.'},
+  {t:'성질',type:'mc',q:'모든 값에 ×2를 하면 표준편차는?',
+    opts:['그대로','2배','4배','반으로'],ans:1,exp:'각 편차가 2배 → 표준편차도 2배(분산은 4배).'},
+];
+
+function buildExam(){
+  const host=document.getElementById('exam-host'); host.innerHTML='';
+  EXAM.forEach((e,i)=>{
+    const wrap=document.createElement('div'); wrap.className='exam-q'; wrap.dataset.idx=i;
+    let inner=`<div><span class="qnum">Q${i+1}.</span> <span class="qtag">${e.t}</span></div>
+      <div style="font-weight:700;margin-top:6px">${e.q}</div>`;
+    if(e.type==='mc'){
+      inner+='<div class="opts">'+e.opts.map((o,k)=>
+        `<div class="opt" data-k="${k}"><span class="mk">${'ABCD'[k]}</span><span>${o}</span></div>`).join('')+'</div>';
+    }else{
+      inner+=`<input type="number" step="any" class="numeric-in" placeholder="숫자 입력" aria-label="Q${i+1} 답">`;
+    }
+    inner+=`<div class="feedback"></div>`;
+    wrap.innerHTML=inner;
+    // wiring
+    if(e.type==='mc'){
+      wrap.querySelectorAll('.opt').forEach(o=>o.addEventListener('click',()=>{
+        wrap.querySelectorAll('.opt').forEach(x=>x.classList.remove('sel'));
+        o.classList.add('sel'); wrap.dataset.pick=o.dataset.k;
+      }));
+    }
+    host.appendChild(wrap);
+  });
+}
+function gradeOne(wrap){
+  const i=+wrap.dataset.idx, e=EXAM[i], fb=wrap.querySelector('.feedback');
+  let ok=false, answered=true;
+  if(e.type==='mc'){
+    const pick=wrap.dataset.pick;
+    if(pick===undefined){answered=false;}
+    else{
+      ok=(+pick===e.ans);
+      wrap.querySelectorAll('.opt').forEach(o=>{o.classList.remove('correct','wrong');
+        if(+o.dataset.k===e.ans)o.classList.add('correct');
+        else if(+o.dataset.k===+pick)o.classList.add('wrong');});
+    }
+  }else{
+    const inp=wrap.querySelector('input'); const v=parseFloat(inp.value);
+    if(isNaN(v)){answered=false;}
+    else{ok=Math.abs(v-e.ans)<=0.06 || r2(v)===r2(e.ans);
+      inp.classList.toggle('ok',ok);inp.classList.toggle('no',!ok);}
+  }
+  if(!answered){fb.className='feedback';return null;}
+  fb.className='feedback show '+(ok?'good':'bad');
+  fb.innerHTML=(ok?'✓ 정답. ':`✗ 정답: ${e.type==='mc'?'ABCD'[e.ans]+'. ':e.ans+'. '}`)+e.exp;
+  return ok;
+}
+document.getElementById('exam-grade').onclick=()=>{
+  let score=0;
+  document.querySelectorAll('.exam-q').forEach(w=>{const r=gradeOne(w);if(r)score++;});
+  document.getElementById('exam-score').textContent=`${score} / 20`;
+  document.getElementById('exam-bar').style.width=(score/20*100)+'%';
+  if(score>=16) setDone('s4',true);
+  document.querySelector('.exam-actions').scrollIntoView({block:'center',behavior:'smooth'});
+};
+document.getElementById('exam-reset').onclick=()=>{
+  buildExam();
+  document.getElementById('exam-score').textContent='– / 20';
+  document.getElementById('exam-bar').style.width='0';
+};
+buildExam();
+/* ===================== 팡파레: 컨페티 + 효과음 ===================== */
+let soundOn=true;
+const muteBtn=document.getElementById('muteBtn');
+if(muteBtn) muteBtn.onclick=()=>{soundOn=!soundOn;
+  muteBtn.textContent=soundOn?'🔊 효과음':'🔇 효과음';};
+const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+let actx=null;
+function fanfare(){
+  if(!soundOn) return;
+  try{
+    actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+    if(actx.state==='suspended') actx.resume();
+    const now=actx.currentTime, notes=[523.25,659.25,783.99,1046.50];
+    notes.forEach((f,i)=>{
+      const o=actx.createOscillator(), g=actx.createGain();
+      o.type='triangle'; o.frequency.value=f;
+      o.connect(g); g.connect(actx.destination);
+      const t=now+i*0.085;
+      g.gain.setValueAtTime(0.0001,t);
+      g.gain.exponentialRampToValueAtTime(0.22,t+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001,t+0.38);
+      o.start(t); o.stop(t+0.42);
+    });
+  }catch(e){}
+}
+
+const fxCanvas=document.getElementById('fx');
+const fxCtx = fxCanvas && fxCanvas.getContext ? fxCanvas.getContext('2d') : null;
+let particles=[], fxRAF=null, dpr=Math.min(window.devicePixelRatio||1,2);
+function sizeFx(){ if(!fxCanvas) return;
+  fxCanvas.width=window.innerWidth*dpr; fxCanvas.height=window.innerHeight*dpr;}
+window.addEventListener('resize',sizeFx); sizeFx();
+const CONFETTI_COLORS=['#E5533D','#0E9C8A','#6C4DD6','#C98A1B','#1F9D57'];
+function confettiBurst(){
+  if(!fxCtx || reduceMotion) return;
+  const cx=window.innerWidth*dpr*0.5, top=70*dpr;
+  for(let i=0;i<130;i++){
+    const ang=(Math.random()*Math.PI)-Math.PI/2;
+    const sp=(6+Math.random()*9)*dpr;
+    particles.push({
+      x:cx+(Math.random()-0.5)*window.innerWidth*0.4*dpr, y:top,
+      vx:Math.cos(ang)*sp*(Math.random()-0.5)*2, vy:Math.sin(ang)*sp - (3+Math.random()*4)*dpr,
+      g:(0.32+Math.random()*0.18)*dpr, life:0, max:70+Math.random()*40,
+      w:(6+Math.random()*7)*dpr, h:(8+Math.random()*8)*dpr,
+      rot:Math.random()*6.28, vr:(Math.random()-0.5)*0.4,
+      c:CONFETTI_COLORS[(Math.random()*CONFETTI_COLORS.length)|0]
+    });
+  }
+  if(!fxRAF) fxLoop();
+}
+function fxLoop(){
+  fxRAF=requestAnimationFrame(fxLoop);
+  fxCtx.clearRect(0,0,fxCanvas.width,fxCanvas.height);
+  particles=particles.filter(p=>p.life<p.max);
+  if(!particles.length){cancelAnimationFrame(fxRAF);fxRAF=null;fxCtx.clearRect(0,0,fxCanvas.width,fxCanvas.height);return;}
+  particles.forEach(p=>{
+    p.life++; p.vy+=p.g; p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr;
+    const a=Math.max(0,1-p.life/p.max);
+    fxCtx.save(); fxCtx.globalAlpha=a; fxCtx.translate(p.x,p.y); fxCtx.rotate(p.rot);
+    fxCtx.fillStyle=p.c; fxCtx.fillRect(-p.w/2,-p.h/2,p.w,p.h); fxCtx.restore();
+  });
+}
+const toast=document.getElementById('toast'); let toastT=null;
+function celebrate(msg){
+  fanfare(); confettiBurst();
+  if(toast){
+    toast.textContent=msg||'잘했어요! 🎉'; toast.classList.add('show');
+    clearTimeout(toastT); toastT=setTimeout(()=>toast.classList.remove('show'),1900);
+  }
+}
+
+/* ===================== 연습 A: 정렬 → 중앙값 ===================== */
+(function(){
+  const host=document.getElementById('med-prac'); if(!host) return;
+  const sets=[[3,8,5,1,9,4],[7,2,9,4,6],[12,5,8,3,11,6,10],[20,14,18,11,16,13]];
+  let arr=sets[0].slice(), sorted=false, found=false, si=0;
+  function render(){
+    const s=[...arr].sort((a,b)=>a-b), n=s.length, mid=Math.floor(n/2);
+    const midIdx = n%2? [mid] : [mid-1,mid];
+    const disp = sorted? s : arr;
+    const chips = disp.map((v,i)=>{
+      const hi = found && sorted && midIdx.includes(i);
+      return `<span class="chip ${hi?'hi':''}">${v}</span>`;
+    }).join('');
+    let steps='';
+    if(sorted) steps += `<div class="muted" style="margin-top:8px">정렬됨 · 개수 <b>${n}개</b> (${n%2?'홀수':'짝수'})</div>`;
+    if(found){
+      const med=S.median(arr);
+      steps += n%2
+        ? `<div class="muted">가운데 하나 → 중앙값 = <b style="color:var(--median)">${fmt(med)}</b></div>`
+        : `<div class="muted">가운데 두 값 ${s[mid-1]}, ${s[mid]} 의 평균 → 중앙값 = <b style="color:var(--median)">${fmt(med)}</b></div>`;
+    }
+    host.innerHTML=`<div class="chips" style="margin-top:6px">${chips}</div>
+      <div class="ctl">
+        <button id="m-sort" class="primary" ${sorted?'disabled':''}>① 크기순 정렬</button>
+        <button id="m-find" ${(sorted&&!found)?'':'disabled'}>② 한가운데 찾기</button>
+        <button id="m-new">새 문제</button>
+      </div>${steps}
+      <div class="ctl" style="margin-top:8px">
+        <input type="number" step="any" id="m-ans" placeholder="중앙값 입력" style="max-width:170px">
+        <button id="m-check">정답 확인</button>
+        <span id="m-res" style="font-family:var(--mono);font-weight:700"></span>
+      </div>`;
+    host.querySelector('#m-sort').onclick=()=>{sorted=true;render();};
+    host.querySelector('#m-find').onclick=()=>{found=true;render();};
+    host.querySelector('#m-new').onclick=()=>{si=(si+1)%sets.length;arr=sets[si].slice();sorted=false;found=false;render();};
+    host.querySelector('#m-check').onclick=()=>{
+      const v=parseFloat(host.querySelector('#m-ans').value), t=S.median(arr);
+      const res=host.querySelector('#m-res'), inp=host.querySelector('#m-ans');
+      if(isNaN(v)){res.textContent='';return;}
+      const ok=Math.abs(v-t)<=0.06||r2(v)===r2(t);
+      inp.classList.toggle('ok',ok);inp.classList.toggle('no',!ok);
+      res.textContent=ok?'✓ 정답':'정답은 '+fmt(t); res.style.color=ok?'var(--good)':'var(--bad)';
+      if(ok) celebrate('중앙값 정답! 🎯');
+    };
+  }
+  render();
+})();
+
+/* ===================== 연습 B: 분산·표준편차 워크시트 ===================== */
+(function(){
+  const host=document.getElementById('var-prac'); if(!host) return;
+  function genData(){ // 평균이 정수가 되는 작은 자료
+    while(true){
+      const n=5, a=Array.from({length:n},()=>1+Math.floor(Math.random()*9));
+      if(S.sum(a)%n===0 && new Set(a).size>=3) return a;
+    }
+  }
+  let data=[4,8,6,5,2];
+  function render(){
+    const m=S.mean(data);
+    const rows=data.map((x,i)=>`<tr>
+      <td class="xval">${x}</td>
+      <td><input type="number" step="any" data-d="${i}" placeholder="?"></td>
+      <td><input type="number" step="any" data-sq="${i}" placeholder="?"></td></tr>`).join('');
+    host.innerHTML=`
+      <div class="given"><span class="lab">평균(이미 구함)</span><span class="val">${fmt(m)}</span></div>
+      <div class="scrollx"><table class="wk">
+        <thead><tr><th>값 x</th><th>편차 (x − 평균)</th><th>(편차)²</th></tr></thead>
+        <tbody>${rows}</tbody>
+        <tfoot><tr><td>합계</td><td>0 (항상)</td>
+          <td><input type="number" step="any" id="v-sumsq" placeholder="제곱의 합"></td></tr></tfoot>
+      </table></div>
+      <div class="verify-grid" style="margin-top:14px">
+        <div class="vfield"><label>분산 = 제곱의 합 ÷ ${data.length}</label>
+          <input type="number" step="any" id="v-var" placeholder="분산"></div>
+        <div class="vfield"><label>표준편차 = √분산 (소수 둘째까지)</label>
+          <input type="number" step="any" id="v-std" placeholder="표준편차"></div>
+      </div>
+      <div class="ctl"><button class="primary" id="v-check">채점하기</button>
+        <button id="v-fill">정답 채우기</button><button id="v-new">새 문제</button></div>
+      <div class="wkmsg" id="v-msg"></div>`;
+
+    const mark=(inp,ok)=>{inp.classList.toggle('ok',ok);inp.classList.toggle('no',!ok);};
+    host.querySelector('#v-check').onclick=()=>{
+      let all=true;
+      host.querySelectorAll('[data-d]').forEach(inp=>{const i=+inp.dataset.d,t=data[i]-m,v=parseFloat(inp.value);
+        const ok=!isNaN(v)&&(Math.abs(v-t)<=0.06||r2(v)===r2(t));mark(inp,ok);if(!ok)all=false;});
+      host.querySelectorAll('[data-sq]').forEach(inp=>{const i=+inp.dataset.sq,t=(data[i]-m)**2,v=parseFloat(inp.value);
+        const ok=!isNaN(v)&&(Math.abs(v-t)<=0.06||r2(v)===r2(t));mark(inp,ok);if(!ok)all=false;});
+      const sumsq=S.sum(data.map(x=>(x-m)**2));
+      const checkOne=(id,t)=>{const inp=host.querySelector(id),v=parseFloat(inp.value);
+        const ok=!isNaN(v)&&(Math.abs(v-t)<=0.06||r2(v)===r2(t));mark(inp,ok);if(!ok)all=false;};
+      checkOne('#v-sumsq',sumsq); checkOne('#v-var',S.variance(data)); checkOne('#v-std',S.std(data));
+      const msg=host.querySelector('#v-msg');
+      if(all){msg.className='wkmsg show good';
+        msg.innerHTML=`✓ 완벽해요! 분산 <b>${fmt(S.variance(data))}</b>, 표준편차 <b>${fmt(S.std(data))}</b>. 값들이 평균에서 평균적으로 약 ${fmt(S.std(data))}만큼 흩어져 있다는 뜻이에요.`;
+        celebrate('표준편차 완성! 🎉');
+      }else{msg.className='wkmsg show bad';
+        msg.innerHTML='✗ 빨간 칸을 다시 확인해 보세요. 편차는 <b>값 − 평균</b>, 제곱은 그 편차를 제곱한 값이에요.';}
+    };
+    host.querySelector('#v-fill').onclick=()=>{
+      host.querySelectorAll('[data-d]').forEach(inp=>{inp.value=fmt(data[+inp.dataset.d]-m);inp.classList.add('ok');});
+      host.querySelectorAll('[data-sq]').forEach(inp=>{inp.value=fmt((data[+inp.dataset.sq]-m)**2);inp.classList.add('ok');});
+      host.querySelector('#v-sumsq').value=fmt(S.sum(data.map(x=>(x-m)**2)));
+      host.querySelector('#v-var').value=fmt(S.variance(data));
+      host.querySelector('#v-std').value=fmt(S.std(data));
+      host.querySelectorAll('#v-sumsq,#v-var,#v-std').forEach(i=>i.classList.add('ok'));
+      const msg=host.querySelector('#v-msg');msg.className='wkmsg show good';
+      msg.innerHTML=`정답을 채웠어요. 분산 <b>${fmt(S.variance(data))}</b>, 표준편차 <b>${fmt(S.std(data))}</b>.`;
+    };
+    host.querySelector('#v-new').onclick=()=>{data=genData();render();};
+  }
+  render();
+})();
+
+/* ===================== 연습 C: 사분위수·펜스·이상치 ===================== */
+(function(){
+  const host=document.getElementById('fence-prac'); if(!host) return;
+  function genData(){
+    const base=[]; let v=8+Math.floor(Math.random()*6);
+    for(let i=0;i<7;i++){v+=1+Math.floor(Math.random()*4);base.push(v);}
+    if(Math.random()<0.7) base.push(base[base.length-1]+18+Math.floor(Math.random()*15)); // 이상치
+    else base.push(base[base.length-1]+2+Math.floor(Math.random()*3));
+    return base.sort((a,b)=>a-b);
+  }
+  let data=[12,14,15,16,18,19,20,45];
+  let picks=new Set();
+  function render(){
+    const q=S.quartiles(data), iqr=q.q3-q.q1;
+    const loF=q.q1-1.5*iqr, hiF=q.q3+1.5*iqr;
+    const outs=data.filter(x=>x<loF||x>hiF);
+    const chips=data.map((v,i)=>`<span class="chip toggle ${picks.has(i)?'on':''}" data-i="${i}">${v}</span>`).join('');
+    host.innerHTML=`
+      <div class="muted" style="margin-top:4px">정렬된 자료 (${data.length}개):</div>
+      <div class="chips" style="margin-top:6px">${data.map(v=>`<span class="chip">${v}</span>`).join('')}</div>
+      <div class="verify-grid" style="margin-top:14px">
+        <div class="vfield"><label>Q1 (1사분위)</label><input type="number" step="any" id="f-q1" placeholder="?"></div>
+        <div class="vfield"><label>Q3 (3사분위)</label><input type="number" step="any" id="f-q3" placeholder="?"></div>
+        <div class="vfield"><label>IQR = Q3 − Q1</label><input type="number" step="any" id="f-iqr" placeholder="?"></div>
+        <div class="vfield"><label>아래 펜스 = Q1 − 1.5·IQR</label><input type="number" step="any" id="f-lo" placeholder="?"></div>
+        <div class="vfield"><label>위 펜스 = Q3 + 1.5·IQR</label><input type="number" step="any" id="f-hi" placeholder="?"></div>
+      </div>
+      <div class="muted" style="margin-top:14px;font-weight:700">펜스 밖의 값(이상치)을 모두 골라 보세요 — 눌러서 선택:</div>
+      <div class="chips" id="f-pick" style="margin-top:6px">${chips}</div>
+      <div class="ctl"><button class="primary" id="f-check">채점하기</button>
+        <button id="f-fill">정답 보기</button><button id="f-new">새 문제</button></div>
+      <div class="wkmsg" id="f-msg"></div>`;
+
+    host.querySelectorAll('#f-pick .chip').forEach(c=>c.onclick=()=>{
+      const i=+c.dataset.i; picks.has(i)?picks.delete(i):picks.add(i);
+      c.classList.toggle('on');});
+    const mark=(id,t)=>{const inp=host.querySelector(id),v=parseFloat(inp.value);
+      const ok=!isNaN(v)&&(Math.abs(v-t)<=0.06||r2(v)===r2(t));
+      inp.classList.toggle('ok',ok);inp.classList.toggle('no',!ok);return ok;};
+    host.querySelector('#f-check').onclick=()=>{
+      let all=true;
+      [['#f-q1',q.q1],['#f-q3',q.q3],['#f-iqr',iqr],['#f-lo',loF],['#f-hi',hiF]].forEach(([id,t])=>{if(!mark(id,t))all=false;});
+      const picked=new Set([...picks].map(i=>data[i]));
+      const actual=new Set(outs);
+      const sameSet = picked.size===actual.size && [...actual].every(v=>picked.has(v));
+      host.querySelectorAll('#f-pick .chip').forEach(c=>{
+        const v=data[+c.dataset.i], isOut=actual.has(v), isPicked=picks.has(+c.dataset.i);
+        c.style.outline = (isOut!==isPicked)?'2px solid var(--bad)':'';});
+      if(!sameSet) all=false;
+      const msg=host.querySelector('#f-msg');
+      if(all){msg.className='wkmsg show good';
+        msg.innerHTML=`✓ 훌륭해요! IQR <b>${fmt(iqr)}</b>, 펜스 [${fmt(loF)}, ${fmt(hiF)}]. 이상치는 ${outs.length?`<b>${outs.join(', ')}</b>`:'<b>없음</b>'} 이에요.`;
+        celebrate('이상치 판별 성공! 🎉');
+      }else{msg.className='wkmsg show bad';
+        msg.innerHTML='✗ 빨간 표시를 확인해 보세요. 펜스 = Q ± 1.5×IQR, 그 <b>바깥</b>에 있는 값만 이상치예요.';}
+    };
+    host.querySelector('#f-fill').onclick=()=>{
+      host.querySelector('#f-q1').value=fmt(q.q1); host.querySelector('#f-q3').value=fmt(q.q3);
+      host.querySelector('#f-iqr').value=fmt(iqr); host.querySelector('#f-lo').value=fmt(loF);
+      host.querySelector('#f-hi').value=fmt(hiF);
+      host.querySelectorAll('#f-q1,#f-q3,#f-iqr,#f-lo,#f-hi').forEach(i=>i.classList.add('ok'));
+      picks=new Set(); data.forEach((v,i)=>{if(outs.includes(v))picks.add(i);});
+      host.querySelectorAll('#f-pick .chip').forEach(c=>c.classList.toggle('on',picks.has(+c.dataset.i)));
+      const msg=host.querySelector('#f-msg');msg.className='wkmsg show good';
+      msg.innerHTML=`정답: Q1 ${fmt(q.q1)}, Q3 ${fmt(q.q3)}, IQR ${fmt(iqr)}, 펜스 [${fmt(loF)}, ${fmt(hiF)}], 이상치 ${outs.length?outs.join(', '):'없음'}.`;
+    };
+    host.querySelector('#f-new').onclick=()=>{data=genData();picks=new Set();render();};
+  }
+  render();
+})();
+</script>
+</body>
+</html>
