@@ -192,9 +192,12 @@
   .qtag{font-family:var(--mono);font-size:10px;color:var(--ink-soft);border:1px solid var(--line);
     border-radius:5px;padding:1px 6px;margin-left:6px;}
   .numeric-in{max-width:220px;margin-top:10px;}
+  #exam-host{padding-bottom:110px;}
   .exam-actions{position:sticky;bottom:14px;margin-top:18px;display:flex;gap:10px;
     align-items:center;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);
-    box-shadow:var(--shadow);border-radius:14px;padding:12px 16px;}
+    box-shadow:var(--shadow);border-radius:14px;padding:12px 16px;z-index:6;}
+  .exam-missed{width:100%;font-size:13px;margin-top:4px;}
+  .exam-missed a{margin-right:8px;}
   .scorebig{font-family:var(--mono);font-weight:700;font-size:18px;}
   .scorebar{flex:1;min-width:120px;height:10px;border-radius:6px;background:var(--surface-2);overflow:hidden;border:1px solid var(--line);}
   .scorebar > i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--median),var(--good));transition:width .5s;}
@@ -427,6 +430,7 @@
         <button id="ct-outlier" class="warn">이상치(아주 큰 값) 넣어보기</button>
         <button id="ct-right">오른쪽 꼬리</button>
         <button id="ct-left">왼쪽 꼬리</button>
+        <button id="ct-undo">되돌리기</button>
         <button id="ct-reset">처음으로</button>
       </div>
       <p class="muted" style="margin-top:12px" id="ct-hint">💡 <b>이상치</b> 버튼을 눌러 보세요. <b>평균선은 이상치 쪽으로 확 끌려가지만, 중앙값선은 거의 안 움직입니다.</b> <b>오른쪽 꼬리 / 왼쪽 꼬리</b>를 누르면 세 선이 서로 떨어집니다. 오른쪽 꼬리(큰 값 쪽으로 늘어진 분포)에서는 보통 <b>최빈값 &lt; 중앙값 &lt; 평균</b> 순서가 됩니다.</p>
@@ -438,7 +442,7 @@
       </div>
 
       <div class="quizlet" data-quizlet="1">
-        <div class="q">확인 1. 자료 <b>[3, 5, 6, 7, 100]</b>의 평균은 이상치 100에 끌려 약 24입니다. 가운데 위치로 나머지 값(3~7)을 대표하는 값은?</div>
+        <div class="q">확인 1. 자료 <b>[3, 5, 6, 7, 100]</b>의 평균은 이상치 100에 끌려 24.2입니다. 가운데 위치로 나머지 값(3~7)을 대표하는 값은?</div>
         <div class="opts">
           <div class="opt" data-correct="0"><span class="mk">A</span><span>평균 — 모든 값을 반영하니까</span></div>
           <div class="opt" data-correct="1"><span class="mk">B</span><span>중앙값 — 정렬하면 가운데가 6이라 100에 거의 안 흔들리니까</span></div>
@@ -723,6 +727,7 @@
         <button id="exam-reset">다시 풀기</button>
         <div class="scorebar"><i id="exam-bar"></i></div>
         <div class="scorebig" id="exam-score">– / 20</div>
+        <div class="exam-missed" id="exam-missed"></div>
       </div>
     </div>
     <label class="step" style="cursor:pointer;margin-top:8px;display:inline-flex" data-check="s4">
@@ -859,7 +864,7 @@ function wireQuizlet(node, explain){
   }));
 }
 wireQuizlet(document.querySelector('[data-quizlet="1"]'),
-  '<b>중앙값</b>은 크기순 가운데 값이라 100이 끼어도 6입니다. 평균은 100에 끌려 약 24가 되어 나머지 값(3~7)과 동떨어집니다. (이 자료는 값이 모두 한 번씩이라 최빈값은 없습니다.)');
+  '<b>중앙값</b>은 크기순 가운데 값이라 100이 끼어도 6입니다. 평균은 (3+5+6+7+100)÷5=24.2로, 나머지 값(3~7)과 동떨어집니다. (값이 모두 한 번씩이라 최빈값은 없습니다.)');
 wireQuizlet(document.querySelector('[data-quizlet="2"]'),
   '<b>나</b>가 더 큽니다. 값들이 평균 50에서 ±40까지 멀리 퍼져 있어 편차가 크고, 따라서 표준편차도 큽니다. 평균이 같아도 퍼짐은 전혀 다를 수 있습니다.');
 wireQuizlet(document.querySelector('[data-quizlet="hook"]'),
@@ -867,6 +872,8 @@ wireQuizlet(document.querySelector('[data-quizlet="hook"]'),
 
 /* ===================== 1. 중심값 실험실 ===================== */
 let ctData=[6,7,8,9,10];
+const ctHist=[];
+function ctSnap(){ctHist.push(ctData.slice()); if(ctHist.length>40) ctHist.shift();}
 const ctSvg=document.getElementById('ct-svg');
 const CT_HINT={
   start:'💡 <b>이상치</b> 버튼을 눌러 보세요. <b>평균선은 이상치 쪽으로 확 끌려가지만, 중앙값선은 거의 안 움직입니다.</b> <b>오른쪽 꼬리 / 왼쪽 꼬리</b>를 누르면 세 선이 서로 떨어집니다.',
@@ -886,7 +893,7 @@ function drawCT(){
     const idx=ctData.indexOf(v);
     const c=document.createElement('span'); c.className='chip';
     c.innerHTML=`${v}<button aria-label="${v} 삭제">×</button>`;
-    c.querySelector('button').onclick=()=>{ctData.splice(idx,1);drawCT();};
+    c.querySelector('button').onclick=()=>{ctSnap();ctData.splice(idx,1);drawCT();};
     chips.appendChild(c);
   });
 
@@ -925,17 +932,21 @@ function drawCT(){
   ctSvg.innerHTML=s;
 }
 function ctAdd(){const v=parseFloat(document.getElementById('ct-input').value);
-  if(!isNaN(v)){ctData.push(v);document.getElementById('ct-input').value='';
+  if(!isNaN(v)){ctSnap();ctData.push(v);document.getElementById('ct-input').value='';
     document.getElementById('ct-hint').innerHTML=CT_HINT.start;drawCT();}}
 document.getElementById('ct-add').onclick=ctAdd;
 document.getElementById('ct-input').addEventListener('keydown',e=>{if(e.key==='Enter')ctAdd();});
-document.getElementById('ct-outlier').onclick=()=>{const m=ctData.length?Math.max(...ctData):10;ctData.push(m+90);
+document.getElementById('ct-outlier').onclick=()=>{ctSnap();const m=ctData.length?Math.max(...ctData):10;ctData.push(m+90);
   document.getElementById('ct-hint').innerHTML=CT_HINT.outlier;drawCT();};
-document.getElementById('ct-right').onclick=()=>{ctData=[4,5,5,6,6,6,7,7,10,16];
+document.getElementById('ct-right').onclick=()=>{ctSnap();ctData=[4,5,5,6,6,6,7,7,10,16];
   document.getElementById('ct-hint').innerHTML=CT_HINT.right;drawCT();};
-document.getElementById('ct-left').onclick=()=>{ctData=[2,8,11,12,12,13,13,13,14,14];
+document.getElementById('ct-left').onclick=()=>{ctSnap();ctData=[2,8,11,12,12,13,13,13,14,14];
   document.getElementById('ct-hint').innerHTML=CT_HINT.left;drawCT();};
-document.getElementById('ct-reset').onclick=()=>{ctData=[6,7,8,9,10];
+document.getElementById('ct-undo').onclick=()=>{
+  if(!ctHist.length) return;
+  ctData=ctHist.pop(); document.getElementById('ct-hint').innerHTML=CT_HINT.start; drawCT();
+};
+document.getElementById('ct-reset').onclick=()=>{ctSnap();ctData=[6,7,8,9,10];
   document.getElementById('ct-hint').innerHTML=CT_HINT.start;drawCT();};
 drawCT();
 
@@ -1410,8 +1421,8 @@ const EXAM_POOL=[
     opts:['변하지 않는다','5만큼 커진다','5만큼 작아진다','2배가 된다','5만큼 커지고 표준편차도 5 커진다'],ans:1,exp:'모든 값이 5씩 커지면 합도 5n만큼 커지고 평균은 +5.'},
   {t:'평균',type:'mc',q:'자료의 모든 값에 2를 곱하면 평균은 어떻게 변하는가?',
     opts:['변하지 않는다','2배가 된다','반으로 줄어든다','√2배가 된다','4배가 된다'],ans:1,exp:'모든 값이 2배 → 합도 2배 → 평균도 2배. (4배가 되는 것은 분산입니다.)'},
-  {t:'평균',type:'mc',q:'A반 10명 평균 70점, B반 10명 평균 80점. 두 반 합쳐 20명의 평균은?',
-    opts:['70점','75점','80점','알 수 없다','두 반 평균의 합인 150점'],ans:1,exp:'(70×10+80×10)÷20=1500÷20=75점.'},
+  {t:'평균',type:'mc',q:'A반 10명 평균 70점, B반 30명 평균 80점. 두 반을 합친 40명의 평균은?',
+    opts:['75점','77.5점','80점','70점','150점'],ans:1,exp:'인원이 다르면 두 평균을 더해 2로 나누면 안 됩니다. (70×10+80×30)÷40=3100÷40=77.5점.'},
   /* ── 중앙값 (12) ── */
   {t:'중앙값',type:'num',q:'자료 [3, 5, 7, 9, 11]의 중앙값은?',ans:7,exp:'5개 → 3번째 값 = 7.'},
   {t:'중앙값',type:'num',q:'자료 [4, 8, 15, 16, 23, 42]의 중앙값은?',ans:15.5,exp:'6개 → 가운데 두 값 (15+16)/2=15.5.'},
@@ -1693,6 +1704,19 @@ function tallyExam(scroll){
   document.getElementById('exam-score').textContent=`${score} / ${total}`;
   document.getElementById('exam-bar').style.width=(answered?score/total*100:0)+'%';
   if(answered===total && score>=Math.ceil(total*0.8)) setDone('s4',true);
+  const miss=document.getElementById('exam-missed');
+  if(miss){
+    const bad=[...document.querySelectorAll('.exam-q')].filter(w=>w.querySelector('.feedback.bad'));
+    if(!bad.length) miss.innerHTML='';
+    else{
+      miss.innerHTML='틀린 문항만: '+bad.map(w=>`<a class="jump" href="#s4" data-jump="${w.dataset.idx}">${w.querySelector('.qnum').textContent}</a>`).join(' ');
+      miss.querySelectorAll('[data-jump]').forEach(a=>a.onclick=e=>{
+        e.preventDefault();
+        const t=document.querySelector(`.exam-q[data-idx="${a.dataset.jump}"]`);
+        if(t) t.scrollIntoView({block:'center',behavior:'smooth'});
+      });
+    }
+  }
   if(scroll) document.querySelector('.exam-actions').scrollIntoView({block:'center',behavior:'smooth'});
 }
 document.getElementById('exam-grade').onclick=()=>tallyExam(true);
@@ -1701,8 +1725,13 @@ buildExam();
 /* ===================== 팡파레: 컨페티 + 효과음 ===================== */
 let soundOn=true;
 const muteBtn=document.getElementById('muteBtn');
-if(muteBtn) muteBtn.onclick=()=>{soundOn=!soundOn;
-  muteBtn.textContent=soundOn?'🔊 효과음':'🔇 효과음';};
+function syncMute(){
+  if(!muteBtn) return;
+  muteBtn.textContent=soundOn?'🔊 효과음 켜짐':'🔇 효과음 꺼짐';
+  muteBtn.setAttribute('aria-pressed', soundOn?'false':'true');
+  muteBtn.setAttribute('aria-label', soundOn?'효과음 켜짐, 누르면 끔':'효과음 꺼짐, 누르면 켬');
+}
+if(muteBtn){ syncMute(); muteBtn.onclick=()=>{soundOn=!soundOn; syncMute();}; }
 const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 let actx=null;
@@ -1891,8 +1920,10 @@ function celebrate(msg){
 (function(){
   const host=document.getElementById('med-prac'); if(!host) return;
   const sets=[[3,8,5,1,9,4],[7,2,9,4,6],[12,5,8,3,11,6,10],[20,14,18,11,16,13]];
-  let arr=sets[0].slice(), sorted=false, found=false, si=0;
+  let arr=sets[0].slice(), sorted=false, found=false, revealed=false, si=0, draft='';
   function render(){
+    const keep=host.querySelector('#m-ans');
+    if(keep) draft=keep.value;
     const s=[...arr].sort((a,b)=>a-b), n=s.length, mid=Math.floor(n/2);
     const midIdx = n%2? [mid] : [mid-1,mid];
     const disp = sorted? s : arr;
@@ -1902,7 +1933,12 @@ function celebrate(msg){
     }).join('');
     let steps='';
     if(sorted) steps += `<div class="muted" style="margin-top:8px">정렬됨 · 개수 <b>${n}개</b> (${n%2?'홀수':'짝수'})</div>`;
-    if(found){
+    if(found && !revealed){
+      steps += n%2
+        ? `<div class="muted">가운데를 표시했어요. 그 값이 중앙값입니다. 아래 칸에 적어 보세요.</div>`
+        : `<div class="muted">가운데 두 값을 표시했어요. <b>둘의 평균</b>이 중앙값입니다. 계산해서 적어 보세요.</div>`;
+    }
+    if(revealed){
       const med=S.median(arr);
       steps += n%2
         ? `<div class="muted">가운데 하나 → 중앙값 = <b style="color:var(--median)">${fmt(med)}</b></div>`
@@ -1915,20 +1951,25 @@ function celebrate(msg){
         <button id="m-new">새 문제</button>
       </div>${steps}
       <div class="ctl" style="margin-top:8px">
-        <input type="number" step="any" id="m-ans" placeholder="중앙값 입력" style="max-width:170px">
+        <input type="number" step="any" id="m-ans" placeholder="중앙값 입력" style="max-width:170px" value="${draft}">
         <button id="m-check">정답 확인</button>
         <span id="m-res" style="font-family:var(--mono);font-weight:700"></span>
       </div>`;
     host.querySelector('#m-sort').onclick=()=>{sorted=true;render();};
     host.querySelector('#m-find').onclick=()=>{found=true;render();};
-    host.querySelector('#m-new').onclick=()=>{si=(si+1)%sets.length;arr=sets[si].slice();sorted=false;found=false;render();};
+    host.querySelector('#m-new').onclick=()=>{si=(si+1)%sets.length;arr=sets[si].slice();sorted=false;found=false;revealed=false;draft='';render();};
     host.querySelector('#m-check').onclick=()=>{
       const v=parseFloat(host.querySelector('#m-ans').value), t=S.median(arr);
       const res=host.querySelector('#m-res'), inp=host.querySelector('#m-ans');
+      draft=inp.value;
       if(isNaN(v)){res.textContent='';return;}
       const ok=Math.abs(v-t)<=0.06||r2(v)===r2(t);
       inp.classList.toggle('ok',ok);inp.classList.toggle('no',!ok);
       res.textContent=ok?'✓ 정답':'정답은 '+fmt(t); res.style.color=ok?'var(--good)':'var(--bad)';
+      revealed=true; render();
+      const res2=host.querySelector('#m-res'), inp2=host.querySelector('#m-ans');
+      inp2.value=draft; inp2.classList.toggle('ok',ok);inp2.classList.toggle('no',!ok);
+      res2.textContent=ok?'✓ 정답':'정답은 '+fmt(t); res2.style.color=ok?'var(--good)':'var(--bad)';
       if(ok) celebrate('중앙값 정답! 🎯');
     };
   }
