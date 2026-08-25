@@ -386,7 +386,14 @@
 
       <h3 style="margin-top:18px">직접 연습 — 정렬하고 한가운데 찾기</h3>
       <p class="muted">버튼을 차례로 눌러 두 단계를 눈으로 확인하고, 중앙값을 직접 입력해 맞혀 보세요.</p>
-      <div id="med-prac"></div>
+      <div id="med-prac">
+        <div id="med-prac-viz"></div>
+        <div class="ctl" style="margin-top:8px">
+          <input type="number" step="any" id="m-ans" placeholder="중앙값 입력" style="max-width:170px" aria-label="중앙값">
+          <button type="button" id="m-check">정답 확인</button>
+          <span id="m-res" style="font-family:var(--mono);font-weight:700"></span>
+        </div>
+      </div>
     </div>
 
     <div class="card">
@@ -1918,12 +1925,14 @@ function celebrate(msg){
 
 /* ===================== 연습 A: 정렬 → 중앙값 ===================== */
 (function(){
-  const host=document.getElementById('med-prac'); if(!host) return;
+  const viz=document.getElementById('med-prac-viz');
+  const inp=document.getElementById('m-ans');
+  const res=document.getElementById('m-res');
+  const checkBtn=document.getElementById('m-check');
+  if(!viz||!inp) return;
   const sets=[[3,8,5,1,9,4],[7,2,9,4,6],[12,5,8,3,11,6,10],[20,14,18,11,16,13]];
-  let arr=sets[0].slice(), sorted=false, found=false, revealed=false, si=0, draft='';
+  let arr=sets[0].slice(), sorted=false, found=false, revealed=false, si=0;
   function render(){
-    const keep=host.querySelector('#m-ans');
-    if(keep) draft=keep.value;
     const s=[...arr].sort((a,b)=>a-b), n=s.length, mid=Math.floor(n/2);
     const midIdx = n%2? [mid] : [mid-1,mid];
     const disp = sorted? s : arr;
@@ -1944,35 +1953,29 @@ function celebrate(msg){
         ? `<div class="muted">가운데 하나 → 중앙값 = <b style="color:var(--median)">${fmt(med)}</b></div>`
         : `<div class="muted">가운데 두 값 ${s[mid-1]}, ${s[mid]} 의 평균 → 중앙값 = <b style="color:var(--median)">${fmt(med)}</b></div>`;
     }
-    host.innerHTML=`<div class="chips" style="margin-top:6px">${chips}</div>
+    viz.innerHTML=`<div class="chips" style="margin-top:6px">${chips}</div>
       <div class="ctl">
-        <button id="m-sort" class="primary" ${sorted?'disabled':''}>① 크기순 정렬</button>
-        <button id="m-find" ${(sorted&&!found)?'':'disabled'}>② 한가운데 찾기</button>
-        <button id="m-new">새 문제</button>
-      </div>${steps}
-      <div class="ctl" style="margin-top:8px">
-        <input type="number" step="any" id="m-ans" placeholder="중앙값 입력" style="max-width:170px" value="${draft}">
-        <button id="m-check">정답 확인</button>
-        <span id="m-res" style="font-family:var(--mono);font-weight:700"></span>
-      </div>`;
-    host.querySelector('#m-sort').onclick=()=>{sorted=true;render();};
-    host.querySelector('#m-find').onclick=()=>{found=true;render();};
-    host.querySelector('#m-new').onclick=()=>{si=(si+1)%sets.length;arr=sets[si].slice();sorted=false;found=false;revealed=false;draft='';render();};
-    host.querySelector('#m-check').onclick=()=>{
-      const v=parseFloat(host.querySelector('#m-ans').value), t=S.median(arr);
-      const res=host.querySelector('#m-res'), inp=host.querySelector('#m-ans');
-      draft=inp.value;
-      if(isNaN(v)){res.textContent='';return;}
-      const ok=Math.abs(v-t)<=0.06||r2(v)===r2(t);
-      inp.classList.toggle('ok',ok);inp.classList.toggle('no',!ok);
-      res.textContent=ok?'✓ 정답':'정답은 '+fmt(t); res.style.color=ok?'var(--good)':'var(--bad)';
-      revealed=true; render();
-      const res2=host.querySelector('#m-res'), inp2=host.querySelector('#m-ans');
-      inp2.value=draft; inp2.classList.toggle('ok',ok);inp2.classList.toggle('no',!ok);
-      res2.textContent=ok?'✓ 정답':'정답은 '+fmt(t); res2.style.color=ok?'var(--good)':'var(--bad)';
-      if(ok) celebrate('중앙값 정답! 🎯');
+        <button type="button" id="m-sort" class="primary" ${sorted?'disabled':''}>① 크기순 정렬</button>
+        <button type="button" id="m-find" ${(sorted&&!found)?'':'disabled'}>② 한가운데 찾기</button>
+        <button type="button" id="m-new">새 문제</button>
+      </div>${steps}`;
+    viz.querySelector('#m-sort').onclick=()=>{sorted=true;render();};
+    viz.querySelector('#m-find').onclick=()=>{found=true;render();};
+    viz.querySelector('#m-new').onclick=()=>{
+      si=(si+1)%sets.length;arr=sets[si].slice();sorted=false;found=false;revealed=false;
+      inp.value=''; inp.classList.remove('ok','no'); res.textContent='';
+      render();
     };
   }
+  checkBtn.onclick=()=>{
+    const v=parseFloat(inp.value), t=S.median(arr);
+    if(isNaN(v)){res.textContent='';return;}
+    const ok=Math.abs(v-t)<=0.06||r2(v)===r2(t);
+    inp.classList.toggle('ok',ok);inp.classList.toggle('no',!ok);
+    res.textContent=ok?'✓ 정답':'정답은 '+fmt(t); res.style.color=ok?'var(--good)':'var(--bad)';
+    revealed=true; render();
+    if(ok) celebrate('중앙값 정답! 🎯');
+  };
   render();
 })();
 
