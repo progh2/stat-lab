@@ -16,6 +16,7 @@
     --line:#D6DEEA;
     --mean:#E5533D;     /* 평균 = 중심(따뜻한 빨강) */
     --median:#0E9C8A;   /* 중앙값 = 중심(차분한 청록) */
+    --mode:#C98A1B;     /* 최빈값 = 금색 */
     --spread:#6C4DD6;   /* 산포 = 보라 */
     --good:#1F9D57;
     --bad:#D2453B;
@@ -110,7 +111,9 @@
     padding:2px 7px;border-radius:6px;margin-left:8px;vertical-align:middle;}
   .tag.mean{color:var(--mean);background:rgba(229,83,61,.1);}
   .tag.median{color:var(--median);background:rgba(14,156,138,.12);}
+  .tag.mode{color:var(--mode);background:rgba(201,138,27,.12);}
   .tag.spread{color:var(--spread);background:rgba(108,77,214,.12);}
+  .sw-mode{background:var(--mode);}
   .muted{color:var(--ink-soft);font-size:14px;}
 
   /* readout 칩 */
@@ -189,9 +192,12 @@
   .qtag{font-family:var(--mono);font-size:10px;color:var(--ink-soft);border:1px solid var(--line);
     border-radius:5px;padding:1px 6px;margin-left:6px;}
   .numeric-in{max-width:220px;margin-top:10px;}
+  #exam-host{padding-bottom:110px;}
   .exam-actions{position:sticky;bottom:14px;margin-top:18px;display:flex;gap:10px;
     align-items:center;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);
-    box-shadow:var(--shadow);border-radius:14px;padding:12px 16px;}
+    box-shadow:var(--shadow);border-radius:14px;padding:12px 16px;z-index:6;}
+  .exam-missed{width:100%;font-size:13px;margin-top:4px;}
+  .exam-missed a{margin-right:8px;}
   .scorebig{font-family:var(--mono);font-weight:700;font-size:18px;}
   .scorebar{flex:1;min-width:120px;height:10px;border-radius:6px;background:var(--surface-2);overflow:hidden;border:1px solid var(--line);}
   .scorebar > i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--median),var(--good));transition:width .5s;}
@@ -257,6 +263,41 @@
   @keyframes popdot{0%{transform:scale(.4)}60%{transform:scale(1.35)}100%{transform:scale(1)}}
   .step.done .dot{animation:popdot .42s ease;}
   .mute{padding:5px 10px;font-size:13px;line-height:1;border-radius:9px;}
+
+  /* ---------- 보충 카드 / 오해 카드 / 붙여넣기 ---------- */
+  .concept.gold{border-left-color:var(--gold);}
+  .note{
+    font-size:14px;background:rgba(108,77,214,.07);
+    border:1px dashed rgba(108,77,214,.35);border-radius:12px;
+    padding:12px 14px;margin:12px 0;color:#2a3850;
+  }
+  .note b{color:var(--ink);}
+  .myth{
+    margin-top:16px;background:rgba(201,138,27,.07);
+    border:1px solid rgba(201,138,27,.32);border-radius:14px;padding:14px 16px;
+  }
+  .myth h4{margin:0 0 6px;font-size:14.5px;}
+  .myth p{margin:6px 0;font-size:14px;color:#2a3850;}
+  .myth .wrong{color:var(--bad);font-weight:800;}
+  textarea.paste{
+    font-family:var(--mono);font-size:13px;width:100%;min-height:92px;
+    border:1px solid var(--line);border-radius:10px;padding:10px 12px;
+    resize:vertical;background:var(--surface);color:var(--ink);line-height:1.5;
+  }
+  .extra-badge{
+    font-family:var(--mono);font-size:11px;font-weight:700;
+    background:rgba(201,138,27,.12);color:var(--gold);
+    border:1px solid rgba(201,138,27,.3);border-radius:6px;padding:2px 7px;
+    margin-left:6px;vertical-align:middle;
+  }
+  .fivenum{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:12px;}
+  @media (max-width:560px){.fivenum{grid-template-columns:repeat(3,1fr);}}
+  .fivenum .stat{min-width:0;padding:8px 10px;}
+  .fivenum .v{font-size:18px;}
+  .rulebox{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:8px 0;font-size:14px;}
+  .rulebox + .rulebox{margin-top:8px;}
+  a.jump{color:var(--spread);font-weight:700;text-decoration:none;border-bottom:1px dashed rgba(108,77,214,.45);}
+  a.jump:hover{border-bottom-style:solid;}
 </style>
 </head>
 <body>
@@ -269,7 +310,7 @@
     <div class="brand">기초 통계량 실험실 <small>· 숫자로 데이터 읽기</small></div>
     <nav class="steps" id="steps"></nav>
     <button class="mute" id="muteBtn" aria-label="효과음 켜기/끄기">🔊 효과음</button>
-    <div class="progress-meter" id="meter">0 / 5 완료</div>
+    <div class="progress-meter" id="meter">0 / 4 완료</div>
   </div>
 </div>
 
@@ -279,7 +320,7 @@
   <header class="hero">
     <div class="eyebrow">descriptive statistics</div>
     <h1>수십, 수백 개의 숫자를<br><span class="ink-mean">한 줄</span>로 요약하면<br><span class="ink-spread">데이터가 보인다</span></h1>
-    <p class="lead">자료를 일일이 들여다볼 수는 없습니다. 그래서 우리는 자료의 <b>중심</b>과 <b>퍼짐</b>을 몇 개의 숫자로 압축합니다. 직접 값을 바꿔 보고, 손으로 계산해 검증하고, 마지막에 20문제로 확인해 보세요.</p>
+    <p class="lead">자료를 일일이 들여다볼 수는 없습니다. 그래서 우리는 자료의 <b>중심</b>과 <b>퍼짐</b>을 몇 개의 숫자로 압축합니다. 직접 값을 바꿔 보고, 손으로 계산해 검증하고, 마지막에 형성평가로 확인해 보세요.</p>
 
     <div class="hook">
       <h3>먼저 질문 하나 — 두 반 중 어느 반이 더 "고르게" 공부했을까요?</h3>
@@ -295,7 +336,7 @@
         </div>
       </div>
       <div class="reveal">
-        평균만 보면 두 반은 똑같습니다. 하지만 2반은 점수가 사방으로 흩어져 있죠. <b>평균(중심)</b> 하나로는 이 차이를 잡아낼 수 없습니다. 그래서 <b>표준편차(퍼짐)</b> 같은 값이 필요합니다. 이 페이지에서 그 이유를 하나씩 만져 보겠습니다.
+        평균만 보면 두 반은 똑같습니다. 하지만 2반은 점수가 사방으로 흩어져 있죠. <b>평균(중심)</b> 하나로는 이 차이를 잡아낼 수 없습니다. 그래서 <b>표준편차</b>와 <b>IQR(퍼짐)</b>이 필요합니다. 퍼짐을 배운 뒤, <a class="jump" href="#hook-close">바로 이 두 반의 표준편차·IQR을 직접 구해 답을 닫아 보세요</a>.
       </div>
     </div>
   </header>
@@ -308,6 +349,25 @@
         <h2>자료의 <span style="color:var(--mean)">중심</span>을 나타내는 값</h2>
         <p>평균 · 중앙값 · 최빈값 — "이 자료를 대표하는 한 값은?"에 답하는 세 가지 방법</p>
       </div>
+    </div>
+
+    <div class="card">
+      <h3>먼저 개념부터 — 평균(mean)이란? <span class="tag mean">평균</span></h3>
+      <div class="concept warm">
+        <h4>📍 한 줄 정의 <span class="pill">mean</span></h4>
+        <p>자료를 <span class="term">모두 더한 뒤, 자료 개수(n)로 나눈 값</span>이에요. 점 도표에서 보면 점들의 <b>무게중심</b> — 시소의 받침점과 같습니다.</p>
+        <p>구하는 순서는 딱 두 단계예요.</p>
+        <div class="steps-flow">
+          <span class="b">① 모든 값을 더하기</span><span class="ar">→</span>
+          <span class="b">② 개수 n으로 나누기</span>
+        </div>
+        <p>💛 평균은 <b>모든 값을 사용</b>합니다. 그래서 자료의 정보를 하나도 버리지 않지만, 아주 크거나 작은 값 하나에 <b>쉽게 끌려갑니다.</b> "전체를 공평하게 나눈 몫"이지, 언제나 "보통값"은 아니에요.</p>
+        <div class="formula">평균 = (x₁ + x₂ + ⋯ + xₙ) ÷ n</div>
+      </div>
+
+      <h3 style="margin-top:18px">직접 연습 — 더하고 나누기</h3>
+      <p class="muted">합과 평균을 직접 입력해 맞혀 보세요. 평균은 무게중심이라, 모든 점을 같은 무게로 둔 받침점입니다.</p>
+      <div id="mean-prac"></div>
     </div>
 
     <div class="card">
@@ -326,23 +386,48 @@
 
       <h3 style="margin-top:18px">직접 연습 — 정렬하고 한가운데 찾기</h3>
       <p class="muted">버튼을 차례로 눌러 두 단계를 눈으로 확인하고, 중앙값을 직접 입력해 맞혀 보세요.</p>
-      <div id="med-prac"></div>
+      <div id="med-prac">
+        <div id="med-prac-viz"></div>
+        <div class="ctl" style="margin-top:8px">
+          <input type="number" step="any" id="m-ans" placeholder="중앙값 입력" style="max-width:170px" aria-label="중앙값">
+          <button type="button" id="m-check">정답 확인</button>
+          <span id="m-res" style="font-family:var(--mono);font-weight:700"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>먼저 개념부터 — 최빈값(mode)이란? <span class="tag mode">최빈값</span></h3>
+      <div class="concept gold">
+        <h4>📍 한 줄 정의 <span class="pill">mode</span></h4>
+        <p>자료에서 <span class="term">가장 많이 나온 값</span>이에요. "반에서 가장 흔한 신발 사이즈, 가장 많은 혈액형"을 떠올리면 됩니다.</p>
+        <p>이 실험실이 쓰는 규칙은 아래 세 줄로 끝나요. 형성평가도 같은 규칙을 따릅니다.</p>
+        <div class="rulebox">① 모든 값이 <b>한 번씩만</b> 나오면 → 최빈값 <b>없음</b></div>
+        <div class="rulebox">② 가장 많이 나온 값이 <b>둘 이상 동점</b>이면 → 그 값들을 모두 최빈값으로 봅니다. 둘이 1등이면 <b>쌍봉(bimodal)</b>, 셋 이상이면 <b>다봉(multimodal)</b>이에요.</div>
+        <div class="rulebox">③ 혈액형·신발 사이즈처럼 <b>종류(범주)</b>를 나타내는 자료에서는 평균·중앙값보다 최빈값이 대표값으로 적절합니다. 평균 혈액형이란 말은 성립하지 않거든요.</div>
+        <p>💛 "모든 도수가 같다"고 무조건 없는 게 아니에요. <b>[1, 1, 2, 2, 3, 3]</b>처럼 각각 두 번씩이면 1·2·3이 모두 최빈값(다봉)입니다. 없는 경우는 <b>전부 한 번씩</b>일 때뿐입니다.</p>
+      </div>
+
+      <h3 style="margin-top:18px">직접 연습 — 몇 번 나왔는지 세어 보기</h3>
+      <p class="muted">자료를 보고 최빈값을 입력하세요. 없으면 <span class="kbd">없음</span>, 여러 개면 쉼표로 적으면 됩니다 (예: <span class="kbd">2, 4</span>).</p>
+      <div id="mode-prac"></div>
     </div>
 
     <div class="card">
       <h3>실험실: 점을 추가/삭제하며 대푯값이 어떻게 움직이는지 보기 <span class="tag mean">중심값</span></h3>
-      <p class="muted">아래 수직선 위 점들이 자료입니다. 값을 더하거나 빼면 <span style="color:var(--mean);font-weight:700">평균선(빨강)</span>과 <span style="color:var(--median);font-weight:700">중앙값선(청록)</span>이 실시간으로 움직입니다.</p>
+      <p class="muted">아래 수직선 위 점들이 자료입니다. 값을 더하거나 빼면 <span style="color:var(--mean);font-weight:700">평균선(빨강)</span>, <span style="color:var(--median);font-weight:700">중앙값선(청록)</span>, <span style="color:var(--mode);font-weight:700">최빈값선(금색)</span>이 실시간으로 움직입니다.</p>
 
       <div class="stat-row">
         <div class="stat"><div class="k"><span class="swatch sw-mean"></span>평균 (mean)</div><div class="v" id="ct-mean">–</div></div>
         <div class="stat"><div class="k"><span class="swatch sw-median"></span>중앙값 (median)</div><div class="v" id="ct-median">–</div></div>
-        <div class="stat"><div class="k">최빈값 (mode)</div><div class="v" id="ct-mode">–</div></div>
+        <div class="stat"><div class="k"><span class="swatch sw-mode"></span>최빈값 (mode)</div><div class="v" id="ct-mode">–</div></div>
       </div>
 
-      <div class="viz"><svg id="ct-svg" viewBox="0 0 720 200" role="img" aria-label="자료 점 분포와 평균·중앙값 선"></svg></div>
+      <div class="viz"><svg id="ct-svg" viewBox="0 0 720 220" role="img" aria-label="자료 점 분포와 평균·중앙값·최빈값 선"></svg></div>
       <div class="legend">
-        <span><span class="swatch sw-mean"></span>평균 = 모든 값을 더해 개수로 나눈 값(무게중심)</span>
-        <span><span class="swatch sw-median"></span>중앙값 = 크기순 정렬 후 한가운데 값</span>
+        <span><span class="swatch sw-mean"></span>평균 = 모든 값의 무게중심</span>
+        <span><span class="swatch sw-median"></span>중앙값 = 크기순 한가운데</span>
+        <span><span class="swatch sw-mode"></span>최빈값 = 가장 많이 나온 값(없으면 선 없음)</span>
       </div>
 
       <div class="chips" id="ct-chips" aria-label="현재 자료값 목록"></div>
@@ -350,15 +435,24 @@
         <input type="number" id="ct-input" placeholder="값 입력 후 Enter" style="max-width:170px" aria-label="추가할 값" />
         <button id="ct-add" class="primary">＋ 값 추가</button>
         <button id="ct-outlier" class="warn">이상치(아주 큰 값) 넣어보기</button>
+        <button id="ct-right">오른쪽 꼬리</button>
+        <button id="ct-left">왼쪽 꼬리</button>
+        <button id="ct-undo">되돌리기</button>
         <button id="ct-reset">처음으로</button>
       </div>
-      <p class="muted" style="margin-top:12px">💡 <b>이상치</b> 버튼을 눌러 보세요. <b>평균선은 이상치 쪽으로 확 끌려가지만, 중앙값선은 거의 안 움직입니다.</b> 그래서 한쪽으로 치우치거나 튀는 값이 있는 자료(소득, 집값 등)에서는 평균보다 중앙값이 "보통값"을 더 잘 대표합니다.</p>
+      <p class="muted" style="margin-top:12px" id="ct-hint">💡 <b>이상치</b> 버튼을 눌러 보세요. <b>평균선은 이상치 쪽으로 확 끌려가지만, 중앙값선은 거의 안 움직입니다.</b> <b>오른쪽 꼬리 / 왼쪽 꼬리</b>를 누르면 세 선이 서로 떨어집니다. 오른쪽 꼬리(큰 값 쪽으로 늘어진 분포)에서는 보통 <b>최빈값 &lt; 중앙값 &lt; 평균</b> 순서가 됩니다.</p>
+      <p class="note">상자그림과 이어 읽기: 오른쪽 꼬리는 상자그림에서 <b>오른쪽 수염이 길게</b> 나타납니다. 왼쪽 꼬리면 왼쪽 수염이 길어요. 아래 ②단원 상자그림에 같은 자료를 넣어 비교해 보세요.</p>
+
+      <div class="myth">
+        <h4>흔한 오해 · <span class="wrong">“평균이 곧 대푯값이다”</span></h4>
+        <p>평균은 모든 값을 쓰는 무게중심일 뿐, 언제나 "보통값"은 아닙니다. 이상치가 있거나 한쪽으로 늘어진 자료에서는 <b>중앙값</b>이, 혈액형·신발 사이즈처럼 종류를 나타내는 자료에서는 <b>최빈값</b>이 더 정직합니다. 어떤 숫자를 쓸지는 자료의 모양과 질문에 따라 고르는 거예요.</p>
+      </div>
 
       <div class="quizlet" data-quizlet="1">
-        <div class="q">확인 1. 자료 <b>[3, 4, 4, 5, 100]</b> 에서 "대부분의 값"을 가장 잘 대표하는 대푯값은?</div>
+        <div class="q">확인 1. 자료 <b>[3, 5, 6, 7, 100]</b>의 평균은 이상치 100에 끌려 24.2입니다. 가운데 위치로 나머지 값(3~7)을 대표하는 값은?</div>
         <div class="opts">
           <div class="opt" data-correct="0"><span class="mk">A</span><span>평균 — 모든 값을 반영하니까</span></div>
-          <div class="opt" data-correct="1"><span class="mk">B</span><span>중앙값 — 이상치 100의 영향을 거의 안 받으니까</span></div>
+          <div class="opt" data-correct="1"><span class="mk">B</span><span>중앙값 — 정렬하면 가운데가 6이라 100에 거의 안 흔들리니까</span></div>
           <div class="opt" data-correct="0"><span class="mk">C</span><span>최댓값 — 가장 큰 값이 대표하니까</span></div>
         </div>
         <div class="feedback"></div>
@@ -381,6 +475,20 @@
     </div>
 
     <div class="card">
+      <h3>먼저 개념부터 — 범위(range)란? <span class="tag spread">범위</span></h3>
+      <div class="concept">
+        <h4>📍 한 줄 정의 <span class="pill">max − min</span></h4>
+        <p><span class="term">범위</span>는 최댓값에서 최솟값을 뺀 값이에요. 계산이 가장 쉬운 산포 척도입니다.</p>
+        <div class="formula">범위 = 최댓값 − 최솟값</div>
+        <p>💛 단, 범위는 <b>양 끝 두 값만</b> 씁니다. 가운데가 옹기종기 모여 있든, 골고루 퍼져 있든 범위는 같을 수 있어요. 그래서 "구하기는 쉬운데, 이야기 전체를 듣지는 못하는" 숫자입니다.</p>
+      </div>
+
+      <h3 style="margin-top:18px">직접 비교 — 범위는 같은데 느낌이 다를 때</h3>
+      <p class="muted">두 자료의 범위를 직접 구한 뒤, 범위만으로 퍼짐을 말할 수 있는지 생각해 보세요.</p>
+      <div id="range-prac"></div>
+    </div>
+
+    <div class="card">
       <h3>먼저 개념부터 — 편차 · 분산 · 표준편차 <span class="tag spread">산포</span></h3>
       <div class="concept">
         <h4>📍 편차(deviation) <span class="pill">x − 평균</span></h4>
@@ -396,7 +504,8 @@
       <div class="concept warm">
         <h4>📍 표준편차(standard deviation) <span class="pill">√분산</span></h4>
         <p>그래서 분산에 <b>제곱근</b>을 씌워 단위를 원래대로(점² → 점) 되돌린 값이 <span class="term">표준편차</span>예요. 가장 자주 쓰는 산포의 척도입니다.</p>
-        <p>읽는 법이 직관적이에요. 표준편차가 <b>3점</b>이라면 "값들이 평균에서 <b>평균적으로 ±3점쯤</b> 떨어져 있다"는 뜻이거든요. 작을수록 옹기종기 모여 있고, 클수록 넓게 퍼져 있습니다.</p>
+        <p>읽는 법이 직관적이에요. 표준편차가 <b>3점</b>이라면 값들이 평균을 중심으로 <b>대략 그 크기만큼 흩어져 있다</b>는 뜻입니다. 작을수록 옹기종기 모여 있고, 클수록 넓게 퍼져 있습니다.</p>
+        <p class="note" style="margin-bottom:0">표준편차는 |편차|의 평균(평균절대편차)과 다릅니다. 편차를 <b>제곱</b>한 뒤 다시 제곱근을 취하므로, 멀리 떨어진 값이 더 크게 반영됩니다. “평균적으로 ±3”이라고 외우기보다 <b>흩어진 정도의 대표 크기</b>로 읽는 편이 정확해요.</p>
         <div class="steps-flow">
           <span class="b">① 평균</span><span class="ar">→</span>
           <span class="b">② 편차(값−평균)</span><span class="ar">→</span>
@@ -404,6 +513,9 @@
           <span class="b">④ 합 ÷ n = 분산</span><span class="ar">→</span>
           <span class="b">⑤ √분산 = 표준편차</span>
         </div>
+      </div>
+      <div class="note">
+        <b>÷n 과 n−1.</b> 이 실험실은 <b>지금 보고 있는 자료 전체</b>를 요약하므로 분산·표준편차를 <b>÷n</b>으로 구합니다. 엑셀의 <span class="kbd">STDEV.S</span>나 파이썬에서 표본 표준편차를 구하면 <b>n−1</b>로 나눕니다. 정보 시간에 표본을 다룰 때 그 차이를 다시 만나요. 여기서 손으로 계산한 값이 엑셀과 조금 달라도, 이 페이지의 정답은 ÷n입니다.
       </div>
 
       <h3 style="margin-top:18px">직접 연습 — 표를 채우며 표준편차까지 구하기</h3>
@@ -417,7 +529,7 @@
       <div class="stat-row">
         <div class="stat"><div class="k">평균</div><div class="v" id="sp-mean">50</div></div>
         <div class="stat"><div class="k">분산 (variance)</div><div class="v" id="sp-var">–</div></div>
-        <div class="stat"><div class="k"><span class="swatch sw-spread"></span>표준편차 (s)</div><div class="v" id="sp-std">–</div></div>
+        <div class="stat"><div class="k"><span class="swatch sw-spread"></span>표준편차 (σ)</div><div class="v" id="sp-std">–</div></div>
       </div>
       <div class="viz"><svg id="sp-svg" viewBox="0 0 720 240" role="img" aria-label="퍼짐 정도에 따른 분포 막대그래프"></svg></div>
       <div class="ctl" style="flex-direction:column;align-items:stretch">
@@ -425,7 +537,7 @@
         <input type="range" id="sp-range" min="0" max="100" value="40" />
       </div>
       <div class="formula">분산 = (편차)²의 평균 = Σ(xᵢ − 평균)² ÷ n &nbsp;|&nbsp; 표준편차 = √분산</div>
-      <p class="muted">📌 <b>편차</b>는 각 값이 평균에서 떨어진 거리(값 − 평균)입니다. 그냥 더하면 0이 되니까, <b>제곱</b>해서 더한 뒤 평균 낸 것이 분산입니다. 분산은 단위가 제곱(점²)이라 감이 안 와서, 다시 <b>제곱근</b>을 씌워 원래 단위로 되돌린 것이 <b>표준편차</b>입니다. 그래서 표준편차는 "값들이 평균에서 평균적으로 ± 얼마나 떨어져 있나"로 읽습니다.</p>
+      <p class="muted">📌 <b>편차</b>는 각 값이 평균에서 떨어진 거리(값 − 평균)입니다. 그냥 더하면 0이 되니까, <b>제곱</b>해서 더한 뒤 평균 낸 것이 분산입니다. 분산은 단위가 제곱(점²)이라 감이 안 와서, 다시 <b>제곱근</b>을 씌워 원래 단위로 되돌린 것이 <b>표준편차</b>입니다. 흩어진 정도의 대표 크기로 읽으면 됩니다(|편차|의 평균과는 조금 다릅니다).</p>
     </div>
 
     <div class="card">
@@ -440,6 +552,7 @@
           <span class="b">Q1 = 아래 절반의 중앙값</span><span class="ar">→</span>
           <span class="b">Q3 = 위 절반의 중앙값</span>
         </div>
+        <p class="note" style="margin-bottom:0"><b>이 실험실의 방법 = Tukey 방식.</b> 중앙값(Q2)은 아래·위 절반에 <b>넣지 않습니다.</b> 홀수 개일 때 가운데 값을 빼고 남은 값만으로 Q1·Q3를 구해요. 엑셀 <span class="kbd">QUARTILE.INC</span>는 보간을 쓰므로 값이 조금 다를 수 있습니다. 손으로 계산한 값이 엑셀과 달라도, 여기서는 Tukey가 정답입니다.</p>
       </div>
       <div class="concept">
         <h4>📍 IQR(사분위범위) <span class="pill">Q3 − Q1</span></h4>
@@ -474,6 +587,7 @@
         <button id="bx-ex2">이상치 있는 예시</button>
       </div>
       <p class="muted">📦 상자의 <b>길이(IQR)</b>는 가운데 50% 자료가 퍼진 폭입니다. 상자 안 세로선은 <b>중앙값</b>. 수염 밖으로 멀리 떨어진 점(<span style="color:var(--mean);font-weight:700">빨간 점</span>)은 이상치 후보입니다. 표준편차와 달리 IQR은 이상치에 휘둘리지 않아 분포가 치우친 자료에 강합니다.</p>
+      <p class="note"><b>수염으로 치우침 읽기.</b> 오른쪽 수염이 왼쪽보다 훨씬 길면 큰 값 쪽으로 자료가 늘어진 <b>오른쪽 치우침</b>입니다. ①단원 점 도표에서 평균이 중앙값보다 오른쪽에 있던 바로 그 모양이에요. 왼쪽 수염이 길면 반대입니다.</p>
 
       <div class="quizlet" data-quizlet="2">
         <div class="q">확인 2. 두 자료 모두 평균이 50입니다. <b>가</b>=[48,49,50,51,52], <b>나</b>=[10,30,50,70,90]. 표준편차가 더 <b>큰</b> 쪽과 그 의미는?</div>
@@ -489,6 +603,49 @@
         <span class="dot"></span> 이 단원을 이해했어요 (체크)
       </label>
     </div>
+
+    <div class="card" id="hook-close">
+      <h3>도입으로 돌아가기 — 두 반을 숫자로 비교하기 <span class="tag spread">닫힌 고리</span></h3>
+      <p class="muted">맨 처음 질문입니다. 두 반 평균은 둘 다 <b>70점</b>. 이제 표준편차와 IQR을 구해 "어느 반이 더 고르게 공부했나"에 숫자로 답해 보세요.</p>
+      <div class="twocol">
+        <div class="minicard">
+          <div class="label">1반 · 평균 70</div>
+          <div class="nums">68 · 70 · 72 · 69 · 71</div>
+        </div>
+        <div class="minicard">
+          <div class="label">2반 · 평균 70</div>
+          <div class="nums">40 · 95 · 55 · 90 · 70</div>
+        </div>
+      </div>
+      <div class="verify-grid" style="margin-top:14px">
+        <div class="vfield"><label>1반 표준편차 (소수 둘째까지)</label><input type="number" step="any" id="hk-s1" placeholder="예: 1.41" aria-label="1반 표준편차"></div>
+        <div class="vfield"><label>2반 표준편차 (소수 둘째까지)</label><input type="number" step="any" id="hk-s2" placeholder="예: 20.74" aria-label="2반 표준편차"></div>
+        <div class="vfield"><label>1반 IQR</label><input type="number" step="any" id="hk-i1" placeholder="Q3−Q1" aria-label="1반 IQR"></div>
+        <div class="vfield"><label>2반 IQR</label><input type="number" step="any" id="hk-i2" placeholder="Q3−Q1" aria-label="2반 IQR"></div>
+      </div>
+      <div class="ctl">
+        <button class="primary" id="hk-check">채점하기</button>
+        <button id="hk-reveal">정답과 상자그림 보기</button>
+      </div>
+      <div class="wkmsg" id="hk-msg"></div>
+      <div id="hk-viz" style="display:none;margin-top:14px">
+        <div class="viz"><svg id="hk-svg" viewBox="0 0 720 210" role="img" aria-label="1반과 2반 상자그림 비교"></svg></div>
+        <p class="muted" style="margin-top:10px">1반 상자는 짧고 수염도 짧습니다. 2반은 상자가 길고 수염이 양쪽으로 뻗어 있어요. <b>평균은 같아도 퍼짐은 전혀 다릅니다.</b></p>
+      </div>
+      <div class="quizlet" data-quizlet="hook" style="border-top:1px dashed var(--line);padding-top:16px;margin-top:16px">
+        <div class="q">그래서, 어느 반이 더 고르게 공부했나요?</div>
+        <div class="opts">
+          <div class="opt" data-correct="1"><span class="mk">A</span><span>1반 — 표준편차와 IQR이 훨씬 작다</span></div>
+          <div class="opt" data-correct="0"><span class="mk">B</span><span>2반 — 높은 점수가 있으니 더 잘했다</span></div>
+          <div class="opt" data-correct="0"><span class="mk">C</span><span>평균이 같으므로 두 반은 같다</span></div>
+        </div>
+        <div class="feedback"></div>
+      </div>
+      <div class="myth">
+        <h4>흔한 오해 · <span class="wrong">“표준편차가 작을수록 항상 좋다”</span></h4>
+        <p>표준편차는 <b>흩어진 정도</b>이지 잘함/못함이 아닙니다. 모든 학생이 똑같이 40점이면 표준편차는 0이지만 "잘했다"는 뜻은 아니에요. 반대로 창의 과제처럼 다양성이 중요하면 어느 정도 퍼짐이 자연스럽습니다. 1반이 더 고르다는 것은 "점수가 비슷하다"는 뜻이지, 2반보다 항상 우수하다는 뜻은 아닙니다.</p>
+      </div>
+    </div>
   </section>
 
   <!-- 3. 검증형 -->
@@ -497,12 +654,48 @@
       <div class="sec-no">03</div>
       <div>
         <h2>데이터를 직접 <span style="color:var(--gold)">파악</span>해 보기</h2>
-        <p>자료를 보고 손으로 통계량을 구해 입력 → 채점 → 그 숫자가 무엇을 말하는지 해석까지</p>
+        <p>자료를 보고 손으로 통계량을 구해 입력 → 채점 → <b>어떤 숫자를 쓸지 고르고</b> 한 문장으로 말하기</p>
       </div>
     </div>
     <div id="verify-host"></div>
+    <div id="decide-host"></div>
+
+    <div class="card" id="own-data">
+      <h3>우리 반 점수 붙여넣기 <span class="tag spread">계산기</span></h3>
+      <p class="muted">쉼표, 공백, 줄바꿈으로 숫자를 붙여 넣으면 이 페이지와 같은 공식(÷n, Tukey 사분위수)으로 요약해 줍니다. 서버로 보내지 않고 이 창에서만 계산합니다.</p>
+      <textarea class="paste" id="own-input" aria-label="우리 반 점수 붙여넣기" placeholder="예: 72, 68, 90, 55, 81, 77, 64, 88"></textarea>
+      <div class="ctl">
+        <button class="primary" id="own-run">요약하기</button>
+        <button id="own-sample">예시 점수 넣기</button>
+        <button id="own-clear">비우기</button>
+      </div>
+      <div id="own-out" style="display:none">
+        <div class="stat-row">
+          <div class="stat"><div class="k"><span class="swatch sw-mean"></span>평균</div><div class="v" id="own-mean">–</div></div>
+          <div class="stat"><div class="k"><span class="swatch sw-median"></span>중앙값</div><div class="v" id="own-median">–</div></div>
+          <div class="stat"><div class="k"><span class="swatch sw-mode"></span>최빈값</div><div class="v" id="own-mode">–</div></div>
+          <div class="stat"><div class="k">범위</div><div class="v" id="own-range">–</div></div>
+          <div class="stat"><div class="k">분산</div><div class="v" id="own-var">–</div></div>
+          <div class="stat"><div class="k"><span class="swatch sw-spread"></span>표준편차</div><div class="v" id="own-std">–</div></div>
+        </div>
+        <div class="muted" style="font-weight:700;margin-top:8px">다섯 수 요약</div>
+        <div class="fivenum">
+          <div class="stat"><div class="k">최솟값</div><div class="v" id="own-min">–</div></div>
+          <div class="stat"><div class="k">Q1</div><div class="v" id="own-q1">–</div></div>
+          <div class="stat"><div class="k">Q2</div><div class="v" id="own-q2">–</div></div>
+          <div class="stat"><div class="k">Q3</div><div class="v" id="own-q3">–</div></div>
+          <div class="stat"><div class="k">최댓값</div><div class="v" id="own-max">–</div></div>
+        </div>
+        <div class="viz" style="margin-top:14px"><svg id="own-svg" viewBox="0 0 720 160" role="img" aria-label="붙여넣은 자료의 상자그림"></svg></div>
+        <div class="interpret show" id="own-sent" style="display:block">
+          <h4>// 이 반을 한 문장으로</h4>
+          <p id="own-sentence"></p>
+          <p class="muted" style="margin-bottom:0">친구에게 말할 때도 숫자 하나만 던지지 말고, <b>어떤 대푯값을 왜 골랐는지</b>를 한 줄에 붙여 보세요.</p>
+        </div>
+      </div>
+    </div>
     <label class="step" style="cursor:pointer;margin-top:8px;display:inline-flex" data-check="s3">
-      <span class="dot"></span> 세 데이터를 모두 분석해 봤어요 (체크)
+      <span class="dot"></span> 데이터를 해석해 봤어요 (체크)
     </label>
   </section>
 
@@ -511,12 +704,12 @@
     <div class="sec-head">
       <div class="sec-no">04</div>
       <div>
-        <h2>형성평가 · <span style="color:var(--spread)">20문제</span></h2>
-        <p>개념을 제대로 이해했는지 스스로 점검하세요. 문제마다 바로 채점되고, 풀이가 나옵니다.</p>
+        <h2>형성평가 · <span style="color:var(--spread)">문항 은행</span></h2>
+        <p>약 100문항 풀에서 20·40·전체를 순서 또는 랜덤으로 풀어 보세요. 답을 고르거나 입력하면 바로 풀이가 나오고, 아래 바로 전체 점수도 집계됩니다.</p>
       </div>
     </div>
     <div class="card">
-      <p class="muted">선택형은 보기를 고르면 되고, 계산형은 칸에 숫자를 입력합니다. (소수는 둘째 자리까지, 예: <span class="kbd">2.24</span>) 분산·표준편차는 <b>편차 제곱의 평균(÷n)</b> 기준입니다.</p>
+      <p class="muted">선택형은 보기를 고르면 바로 채점되고, 계산형은 숫자를 입력한 뒤 Enter(또는 칸 밖 클릭)로 채점됩니다. (소수는 둘째 자리까지, 예: <span class="kbd">2.24</span>) 분산·표준편차는 <b>편차 제곱의 평균(÷n)</b> 기준입니다. 20·40문제는 중심·퍼짐·사분위/상자·해석이 고르게 나옵니다.</p>
       <div class="exam-cfg">
         <div class="cfg-group">
           <span class="cfg-label">문제 수</span>
@@ -541,6 +734,7 @@
         <button id="exam-reset">다시 풀기</button>
         <div class="scorebar"><i id="exam-bar"></i></div>
         <div class="scorebig" id="exam-score">– / 20</div>
+        <div class="exam-missed" id="exam-missed"></div>
       </div>
     </div>
     <label class="step" style="cursor:pointer;margin-top:8px;display:inline-flex" data-check="s4">
@@ -548,9 +742,32 @@
     </label>
   </section>
 
+  <!-- 5. 선택 미리보기 -->
+  <section class="block" id="s5">
+    <div class="sec-head">
+      <div class="sec-no">05</div>
+      <div>
+        <h2>미리보기 · 68–95–99.7 <span class="extra-badge">선택 · 평가 제외</span></h2>
+        <p>표준편차를 한 걸음만 더 연장해 보는 경험 규칙입니다. 형성평가에는 나오지 않아요.</p>
+      </div>
+    </div>
+    <div class="card">
+      <h3>종 모양 분포에서 표준편차로 비율 읽기 <span class="tag spread">선택</span></h3>
+      <p class="muted">자료가 평균을 중심으로 좌우 대칭인 <b>종 모양(정규분포에 가까운 모양)</b>일 때, 대략 아래 비율이 평균 근처에 모입니다. 이 페이지의 자료가 항상 종 모양인 것은 아니니, "나중에 만날 규칙"으로만 봐 주세요.</p>
+      <div class="viz"><svg id="bell-svg" viewBox="0 0 720 220" role="img" aria-label="68-95-99.7 경험 규칙 종곡선"></svg></div>
+      <div class="stat-row">
+        <div class="stat"><div class="k">평균 ± 1σ</div><div class="v">약 68%</div></div>
+        <div class="stat"><div class="k">평균 ± 2σ</div><div class="v">약 95%</div></div>
+        <div class="stat"><div class="k">평균 ± 3σ</div><div class="v">약 99.7%</div></div>
+      </div>
+      <p>예를 들어 어떤 모의고사 평균이 70점, 표준편차가 10점이면 — 종 모양을 가정할 때 — 대략 <b>68%가 60~80점</b>, <b>95%가 50~90점</b> 구간에 있습니다. 표준편차가 "평균에서 얼마나 떨어져 있나"를 한 줄로 읽게 해주는 연장선이에요.</p>
+      <div class="note">필수 아님. ①~④단원과 형성평가는 이 규칙 없이도 끝낼 수 있습니다. 정보·수학에서 정규분포를 만날 때 다시 꺼내 보세요.</div>
+    </div>
+  </section>
+
   <footer>
-    <p>기초 통계량 실험실 · 평균/중앙값/최빈값 · 범위/분산/표준편차/사분위수<br>
-    진행 상태는 이 창에서만 기억됩니다(새로고침하면 초기화). 자유롭게 여러 번 실험해 보세요.</p>
+    <p>기초 통계량 실험실 · 평균/중앙값/최빈값 · 범위/분산/표준편차/사분위수(Tukey) · ÷n<br>
+    진행 체크는 이 브라우저에 기억됩니다. <button type="button" id="reset-progress" style="padding:4px 10px;font-size:12px;font-weight:600">진행 초기화</button></p>
   </footer>
 </div>
 
@@ -561,10 +778,13 @@ const S = {
   mean: a => a.length? S.sum(a)/a.length : 0,
   median(a){const s=[...a].sort((x,y)=>x-y),n=s.length,m=Math.floor(n/2);
     return n? (n%2? s[m] : (s[m-1]+s[m])/2) : 0;},
-  mode(a){const f={};a.forEach(x=>f[x]=(f[x]||0)+1);const vals=Object.values(f);
-    if(a.length && a.length===Object.keys(f).length && vals.every(v=>v===vals[0])) return null;
-    let bc=0,best=[];for(const k in f){if(f[k]>bc){bc=f[k];best=[+k];}else if(f[k]===bc)best.push(+k);}
-    return best.sort((x,y)=>x-y);},
+  mode(a){
+    if(!a.length) return null;
+    const f={}; a.forEach(x=>f[x]=(f[x]||0)+1);
+    const maxc=Math.max(...Object.values(f));
+    if(maxc===1) return null; // 모든 값이 한 번씩 → 없음
+    return Object.keys(f).filter(k=>f[k]===maxc).map(Number).sort((x,y)=>x-y);
+  },
   range: a => a.length? Math.max(...a)-Math.min(...a):0,
   variance(a){const m=S.mean(a);return S.mean(a.map(x=>(x-m)**2));},
   std: a => Math.sqrt(S.variance(a)),
@@ -574,6 +794,31 @@ const S = {
 };
 const r2 = x => Math.round(x*100)/100;
 const fmt = x => Number.isInteger(x)? String(x) : String(r2(x));
+function parseList(str){
+  return String(str||'').split(/[,\s;/|]+/).map(s=>s.replace(/[점명분명분시간mm㎜호]$/,'')).map(Number).filter(x=>!isNaN(x)&&isFinite(x));
+}
+function modeText(a){
+  const m=S.mode(a);
+  if(m==null) return '없음';
+  if(m.length===1) return String(m[0]);
+  if(m.length===2) return m.join(', ')+' (쌍봉)';
+  return m.join(', ')+' (다봉)';
+}
+function modeParseInput(str){
+  const t=String(str||'').trim();
+  if(!t) return {empty:true};
+  if(/^(없음|없다|none|null)$/i.test(t)) return {none:true};
+  const nums=t.split(/[,，\s]+/).map(Number).filter(x=>!isNaN(x));
+  return {vals:[...new Set(nums)].sort((x,y)=>x-y)};
+}
+function modeMatch(user, data){
+  const m=S.mode(data);
+  if(user.none) return m==null;
+  if(user.empty || !user.vals || !user.vals.length) return false;
+  if(m==null) return false;
+  if(user.vals.length!==m.length) return false;
+  return user.vals.every((v,i)=>v===m[i]);
+}
 
 /* ===================== 진행 상태 ===================== */
 const STEPS = [
@@ -583,6 +828,9 @@ const STEPS = [
   {id:'s4', label:'④ 형성평가'},
 ];
 const done = {};
+try{const saved=JSON.parse(localStorage.getItem('stat-lab-done')||'{}');
+  STEPS.forEach(s=>{if(saved[s.id]) done[s.id]=true;});}catch(e){}
+function persistDone(){try{localStorage.setItem('stat-lab-done',JSON.stringify(done));}catch(e){}}
 function renderSteps(){
   const host = document.getElementById('steps'); host.innerHTML='';
   STEPS.forEach(s=>{
@@ -594,13 +842,20 @@ function renderSteps(){
   const n=Object.values(done).filter(Boolean).length;
   document.getElementById('meter').textContent=`${n} / ${STEPS.length} 완료`;
 }
-function setDone(id,val){done[id]=val;renderSteps();
+function setDone(id,val){done[id]=val;persistDone();renderSteps();
   document.querySelectorAll(`[data-check="${id}"]`).forEach(el=>el.classList.toggle('done',val));
   if(val) celebrate('단원 완료! 🎉');}
 document.querySelectorAll('[data-check]').forEach(el=>{
   el.addEventListener('click',()=>setDone(el.dataset.check, !done[el.dataset.check]));
+  if(done[el.dataset.check]) el.classList.add('done');
 });
 renderSteps();
+const resetProg=document.getElementById('reset-progress');
+if(resetProg) resetProg.onclick=()=>{
+  STEPS.forEach(s=>{done[s.id]=false;});
+  persistDone(); renderSteps();
+  document.querySelectorAll('[data-check]').forEach(el=>el.classList.remove('done'));
+};
 
 /* ===================== 이해 체크(객관식) 공통 ===================== */
 function wireQuizlet(node, explain){
@@ -616,19 +871,28 @@ function wireQuizlet(node, explain){
   }));
 }
 wireQuizlet(document.querySelector('[data-quizlet="1"]'),
-  '<b>중앙값</b>은 크기순 가운데 값이라 100 같은 이상치가 끼어도 거의 흔들리지 않습니다. 평균은 100에 끌려 22가 넘어가 버려 "대부분의 값(3~5)"과 동떨어집니다.');
+  '<b>중앙값</b>은 크기순 가운데 값이라 100이 끼어도 6입니다. 평균은 (3+5+6+7+100)÷5=24.2로, 나머지 값(3~7)과 동떨어집니다. (값이 모두 한 번씩이라 최빈값은 없습니다.)');
 wireQuizlet(document.querySelector('[data-quizlet="2"]'),
   '<b>나</b>가 더 큽니다. 값들이 평균 50에서 ±40까지 멀리 퍼져 있어 편차가 크고, 따라서 표준편차도 큽니다. 평균이 같아도 퍼짐은 전혀 다를 수 있습니다.');
+wireQuizlet(document.querySelector('[data-quizlet="hook"]'),
+  '<b>1반</b>입니다. 표준편차 약 1.41, IQR 3으로 70 주변에 모여 있어요. 2반은 표준편차 약 20.74, IQR 45로 점수가 사방으로 흩어집니다. 평균만 보면 이 차이를 알 수 없습니다.');
 
 /* ===================== 1. 중심값 실험실 ===================== */
 let ctData=[6,7,8,9,10];
+const ctHist=[];
+function ctSnap(){ctHist.push(ctData.slice()); if(ctHist.length>40) ctHist.shift();}
 const ctSvg=document.getElementById('ct-svg');
+const CT_HINT={
+  start:'💡 <b>이상치</b> 버튼을 눌러 보세요. <b>평균선은 이상치 쪽으로 확 끌려가지만, 중앙값선은 거의 안 움직입니다.</b> <b>오른쪽 꼬리 / 왼쪽 꼬리</b>를 누르면 세 선이 서로 떨어집니다.',
+  outlier:'이상치 하나가 평균을 잡아끕니다. 중앙값과 최빈값(있으면)은 거의 그대로예요.',
+  right:'오른쪽 꼬리: 큰 값 쪽으로 늘었습니다. 보통 <b>최빈값 &lt; 중앙값 &lt; 평균</b> 순서가 됩니다. 상자그림에서는 오른쪽 수염이 길게 보여요.',
+  left:'왼쪽 꼬리: 작은 값 쪽으로 늘었습니다. 보통 <b>평균 &lt; 중앙값 &lt; 최빈값</b>입니다. 상자그림에서는 왼쪽 수염이 길어요.'
+};
 function drawCT(){
   const a=ctData;
   document.getElementById('ct-mean').textContent = a.length? fmt(S.mean(a)) : '–';
   document.getElementById('ct-median').textContent = a.length? fmt(S.median(a)) : '–';
-  const md=S.mode(a);
-  document.getElementById('ct-mode').textContent = a.length? (md? md.join(', ') : '없음') : '–';
+  document.getElementById('ct-mode').textContent = a.length? modeText(a) : '–';
 
   // chips
   const chips=document.getElementById('ct-chips'); chips.innerHTML='';
@@ -636,45 +900,61 @@ function drawCT(){
     const idx=ctData.indexOf(v);
     const c=document.createElement('span'); c.className='chip';
     c.innerHTML=`${v}<button aria-label="${v} 삭제">×</button>`;
-    c.querySelector('button').onclick=()=>{ctData.splice(idx,1);drawCT();};
+    c.querySelector('button').onclick=()=>{ctSnap();ctData.splice(idx,1);drawCT();};
     chips.appendChild(c);
   });
 
   // svg dot plot
-  const W=720,H=200,padL=40,padR=40,axisY=140;
+  const W=720,H=220,padL=40,padR=40,axisY=150;
   let lo=Math.min(...a), hi=Math.max(...a);
   if(!a.length){lo=0;hi=10;}
   if(lo===hi){lo-=1;hi+=1;}
   const span=hi-lo, pad=span*0.12||1; lo-=pad; hi+=pad;
   const X=v=> padL+(v-lo)/(hi-lo)*(W-padL-padR);
   let s=`<rect x="0" y="0" width="${W}" height="${H}" fill="transparent"/>`;
-  // axis
   s+=`<line x1="${padL}" y1="${axisY}" x2="${W-padR}" y2="${axisY}" stroke="#C2CCDB" stroke-width="2"/>`;
-  // ticks
   const ticks=5;
   for(let i=0;i<=ticks;i++){const v=lo+(hi-lo)*i/ticks;const x=X(v);
     s+=`<line x1="${x}" y1="${axisY}" x2="${x}" y2="${axisY+5}" stroke="#C2CCDB" stroke-width="1.5"/>`;
     s+=`<text x="${x}" y="${axisY+20}" text-anchor="middle" font-size="11" fill="#5C6B85" font-family="monospace">${r2(v)}</text>`;}
-  // dots (stack duplicates)
   const counts={};
   [...a].sort((x,y)=>x-y).forEach(v=>{counts[v]=(counts[v]||0)+1;
     const x=X(v), k=counts[v], y=axisY-12-(k-1)*16;
     s+=`<circle cx="${x}" cy="${y}" r="6.5" fill="#15233E" opacity="0.82"/>`;});
   if(a.length){
-    const mx=X(S.mean(a)), dx=X(S.median(a));
-    s+=`<line x1="${mx}" y1="18" x2="${mx}" y2="${axisY}" stroke="#E5533D" stroke-width="2.5" stroke-dasharray="2 0"/>`;
-    s+=`<text x="${mx}" y="14" text-anchor="middle" font-size="12" font-weight="700" fill="#E5533D" font-family="monospace">평균 ${fmt(S.mean(a))}</text>`;
-    s+=`<line x1="${dx}" y1="30" x2="${dx}" y2="${axisY}" stroke="#0E9C8A" stroke-width="2.5"/>`;
-    s+=`<text x="${dx}" y="${axisY+38}" text-anchor="middle" font-size="12" font-weight="700" fill="#0E9C8A" font-family="monospace">중앙값 ${fmt(S.median(a))}</text>`;
+    const mn=S.mean(a), mdn=S.median(a), md=S.mode(a);
+    const mx=X(mn), dx=X(mdn);
+    s+=`<line x1="${mx}" y1="18" x2="${mx}" y2="${axisY}" stroke="#E5533D" stroke-width="2.5"/>`;
+    s+=`<text x="${mx}" y="14" text-anchor="middle" font-size="12" font-weight="700" fill="#E5533D" font-family="monospace">평균 ${fmt(mn)}</text>`;
+    s+=`<line x1="${dx}" y1="34" x2="${dx}" y2="${axisY}" stroke="#0E9C8A" stroke-width="2.5"/>`;
+    s+=`<text x="${dx}" y="${axisY+38}" text-anchor="middle" font-size="12" font-weight="700" fill="#0E9C8A" font-family="monospace">중앙값 ${fmt(mdn)}</text>`;
+    if(md){
+      md.forEach((val,i)=>{
+        const x=X(val);
+        s+=`<line x1="${x}" y1="50" x2="${x}" y2="${axisY}" stroke="#C98A1B" stroke-width="2" stroke-dasharray="5 4"/>`;
+        if(i===0) s+=`<text x="${x}" y="${axisY+54}" text-anchor="middle" font-size="11" font-weight="700" fill="#C98A1B" font-family="monospace">최빈 ${md.map(fmt).join(', ')}</text>`;
+      });
+    }
   }
   ctSvg.innerHTML=s;
 }
 function ctAdd(){const v=parseFloat(document.getElementById('ct-input').value);
-  if(!isNaN(v)){ctData.push(v);document.getElementById('ct-input').value='';drawCT();}}
+  if(!isNaN(v)){ctSnap();ctData.push(v);document.getElementById('ct-input').value='';
+    document.getElementById('ct-hint').innerHTML=CT_HINT.start;drawCT();}}
 document.getElementById('ct-add').onclick=ctAdd;
 document.getElementById('ct-input').addEventListener('keydown',e=>{if(e.key==='Enter')ctAdd();});
-document.getElementById('ct-outlier').onclick=()=>{const m=ctData.length?Math.max(...ctData):10;ctData.push(m+90);drawCT();};
-document.getElementById('ct-reset').onclick=()=>{ctData=[6,7,8,9,10];drawCT();};
+document.getElementById('ct-outlier').onclick=()=>{ctSnap();const m=ctData.length?Math.max(...ctData):10;ctData.push(m+90);
+  document.getElementById('ct-hint').innerHTML=CT_HINT.outlier;drawCT();};
+document.getElementById('ct-right').onclick=()=>{ctSnap();ctData=[4,5,5,6,6,6,7,7,10,16];
+  document.getElementById('ct-hint').innerHTML=CT_HINT.right;drawCT();};
+document.getElementById('ct-left').onclick=()=>{ctSnap();ctData=[2,8,11,12,12,13,13,13,14,14];
+  document.getElementById('ct-hint').innerHTML=CT_HINT.left;drawCT();};
+document.getElementById('ct-undo').onclick=()=>{
+  if(!ctHist.length) return;
+  ctData=ctHist.pop(); document.getElementById('ct-hint').innerHTML=CT_HINT.start; drawCT();
+};
+document.getElementById('ct-reset').onclick=()=>{ctSnap();ctData=[6,7,8,9,10];
+  document.getElementById('ct-hint').innerHTML=CT_HINT.start;drawCT();};
 drawCT();
 
 /* ===================== 2A. 퍼짐 슬라이더 ===================== */
@@ -725,46 +1005,50 @@ drawSP();
 
 /* ===================== 2B. 상자그림 ===================== */
 const bxSvg=document.getElementById('bx-svg');
-function parseList(str){return str.split(/[,\s]+/).map(Number).filter(x=>!isNaN(x));}
-function drawBX(){
-  const a=parseList(document.getElementById('bx-input').value);
-  if(a.length<2){bxSvg.innerHTML='';return;}
+function boxPlotSVG(a, opts){
+  opts=opts||{};
+  const H=opts.H||180, W=720, padL=44, padR=44, cy=opts.cy||78, axisY=opts.axisY||130;
+  const showLabels=opts.labels!==false;
   const q=S.quartiles(a), iqr=q.q3-q.q1;
-  document.getElementById('bx-q1').textContent=fmt(q.q1);
-  document.getElementById('bx-q2').textContent=fmt(q.q2);
-  document.getElementById('bx-q3').textContent=fmt(q.q3);
-  document.getElementById('bx-iqr').textContent=fmt(iqr);
-
   const loF=q.q1-1.5*iqr, hiF=q.q3+1.5*iqr;
   const inliers=a.filter(x=>x>=loF&&x<=hiF), outliers=a.filter(x=>x<loF||x>hiF);
-  const whiskLo=Math.min(...inliers), whiskHi=Math.max(...inliers);
-
-  const W=720,H=180,padL=44,padR=44,cy=78;
-  let lo=Math.min(...a), hi=Math.max(...a); const span=hi-lo||1; lo-=span*0.08; hi+=span*0.08;
+  const whiskLo=inliers.length?Math.min(...inliers):Math.min(...a);
+  const whiskHi=inliers.length?Math.max(...inliers):Math.max(...a);
+  let lo=opts.lo!=null?opts.lo:Math.min(...a), hi=opts.hi!=null?opts.hi:Math.max(...a);
+  const span=hi-lo||1; if(opts.lo==null){lo-=span*0.08; hi+=span*0.08;}
   const X=v=>padL+(v-lo)/(hi-lo)*(W-padL-padR);
   let s=`<rect width="${W}" height="${H}" fill="transparent"/>`;
-  // axis
-  s+=`<line x1="${padL}" y1="${130}" x2="${W-padR}" y2="${130}" stroke="#C2CCDB" stroke-width="1.5"/>`;
-  for(let i=0;i<=5;i++){const v=lo+(hi-lo)*i/5,x=X(v);
-    s+=`<line x1="${x}" y1="130" x2="${x}" y2="135" stroke="#C2CCDB"/>`;
-    s+=`<text x="${x}" y="150" text-anchor="middle" font-size="10" fill="#5C6B85" font-family="monospace">${r2(v)}</text>`;}
-  // whiskers
+  if(opts.title) s+=`<text x="${padL}" y="16" font-size="12" font-weight="700" fill="#5C6B85">${opts.title}</text>`;
+  s+=`<line x1="${padL}" y1="${axisY}" x2="${W-padR}" y2="${axisY}" stroke="#C2CCDB" stroke-width="1.5"/>`;
+  if(opts.axis!==false){
+    for(let i=0;i<=5;i++){const v=lo+(hi-lo)*i/5,x=X(v);
+      s+=`<line x1="${x}" y1="${axisY}" x2="${x}" y2="${axisY+5}" stroke="#C2CCDB"/>`;
+      s+=`<text x="${x}" y="${axisY+18}" text-anchor="middle" font-size="10" fill="#5C6B85" font-family="monospace">${r2(v)}</text>`;}
+  }
   s+=`<line x1="${X(whiskLo)}" y1="${cy}" x2="${X(q.q1)}" y2="${cy}" stroke="#15233E" stroke-width="2"/>`;
   s+=`<line x1="${X(q.q3)}" y1="${cy}" x2="${X(whiskHi)}" y2="${cy}" stroke="#15233E" stroke-width="2"/>`;
   s+=`<line x1="${X(whiskLo)}" y1="${cy-12}" x2="${X(whiskLo)}" y2="${cy+12}" stroke="#15233E" stroke-width="2"/>`;
   s+=`<line x1="${X(whiskHi)}" y1="${cy-12}" x2="${X(whiskHi)}" y2="${cy+12}" stroke="#15233E" stroke-width="2"/>`;
-  // box
-  const bx=X(q.q1), bw=X(q.q3)-X(q.q1);
+  const bx=X(q.q1), bw=Math.max(2,X(q.q3)-X(q.q1));
   s+=`<rect x="${bx}" y="${cy-26}" width="${bw}" height="52" rx="6" fill="#6C4DD6" opacity="0.16" stroke="#6C4DD6" stroke-width="2"/>`;
-  // median
   s+=`<line x1="${X(q.q2)}" y1="${cy-26}" x2="${X(q.q2)}" y2="${cy+26}" stroke="#0E9C8A" stroke-width="3"/>`;
-  // outliers
   outliers.forEach(o=>{s+=`<circle cx="${X(o)}" cy="${cy}" r="5" fill="#E5533D"/>`;});
-  // labels
-  s+=`<text x="${X(q.q1)}" y="${cy-34}" text-anchor="middle" font-size="11" fill="#6C4DD6" font-weight="700" font-family="monospace">Q1 ${fmt(q.q1)}</text>`;
-  s+=`<text x="${X(q.q3)}" y="${cy-34}" text-anchor="middle" font-size="11" fill="#6C4DD6" font-weight="700" font-family="monospace">Q3 ${fmt(q.q3)}</text>`;
-  s+=`<text x="${X(q.q2)}" y="${cy+44}" text-anchor="middle" font-size="11" fill="#0E9C8A" font-weight="700" font-family="monospace">중앙값 ${fmt(q.q2)}</text>`;
-  bxSvg.innerHTML=s;
+  if(showLabels){
+    s+=`<text x="${X(q.q1)}" y="${cy-34}" text-anchor="middle" font-size="11" fill="#6C4DD6" font-weight="700" font-family="monospace">Q1 ${fmt(q.q1)}</text>`;
+    s+=`<text x="${X(q.q3)}" y="${cy-34}" text-anchor="middle" font-size="11" fill="#6C4DD6" font-weight="700" font-family="monospace">Q3 ${fmt(q.q3)}</text>`;
+    s+=`<text x="${X(q.q2)}" y="${cy+44}" text-anchor="middle" font-size="11" fill="#0E9C8A" font-weight="700" font-family="monospace">중앙값 ${fmt(q.q2)}</text>`;
+  }
+  return {svg:s, q, iqr, outliers};
+}
+function drawBX(){
+  const a=parseList(document.getElementById('bx-input').value);
+  if(a.length<2){bxSvg.innerHTML='';return;}
+  const drawn=boxPlotSVG(a,{H:180});
+  document.getElementById('bx-q1').textContent=fmt(drawn.q.q1);
+  document.getElementById('bx-q2').textContent=fmt(drawn.q.q2);
+  document.getElementById('bx-q3').textContent=fmt(drawn.q.q3);
+  document.getElementById('bx-iqr').textContent=fmt(drawn.iqr);
+  bxSvg.innerHTML=drawn.svg;
 }
 document.getElementById('bx-apply').onclick=drawBX;
 document.getElementById('bx-input').addEventListener('keydown',e=>{if(e.key==='Enter')drawBX();});
@@ -784,7 +1068,7 @@ const verifyData=[
       {key:'std',label:'표준편차',calc:a=>S.std(a)},
     ],
     interpret:`<p><b>평균 8점, 중앙값 8점</b>으로 거의 일치합니다. 자료가 한쪽으로 치우치지 않고 고르게 분포한다는 신호예요.</p>
-    <p><b>표준편차 약 1.41점</b>은 "점수가 평균(8점)에서 평균적으로 1.4점 정도 떨어져 있다"는 뜻입니다. 만점 기준으로 보면 매우 안정적으로 비슷하게 맞힌 모둠입니다.</p>`
+    <p><b>표준편차 약 1.41점</b>은 점수가 평균 8점 주변으로 그 정도 크기로 흩어져 있다는 뜻입니다. 만점 기준으로 보면 매우 안정적으로 비슷하게 맞힌 모둠입니다.</p>`
   },
   {
     title:'데이터 2 · 카페 일주일 방문자 수',
@@ -793,11 +1077,22 @@ const verifyData=[
     fields:[
       {key:'mean',label:'평균',calc:a=>S.mean(a)},
       {key:'median',label:'중앙값',calc:a=>S.median(a)},
-      {key:'mode',label:'최빈값',calc:a=>S.mode(a)[0]},
+      {key:'mode',label:'최빈값',kind:'mode'},
       {key:'max',label:'최댓값',calc:a=>Math.max(...a)},
     ],
     interpret:`<p><b>평균은 78명</b>인데 <b>실제 6일은 38~45명</b> 수준이죠. 이벤트 날의 <b>300명(이상치)</b>이 평균을 혼자 끌어올린 겁니다.</p>
-    <p>이럴 때 "평소 방문자"를 묻는다면 평균보다 <b>중앙값 41명</b>이 훨씬 정직합니다. <b>이상치가 있으면 평균은 왜곡되고, 중앙값이 대표값으로 더 적절</b>하다는 걸 보여주는 사례입니다.</p>`
+    <p>이럴 때 "평소 방문자"를 묻는다면 평균보다 <b>중앙값 41명</b>이 훨씬 정직합니다. <b>이상치가 있으면 평균은 왜곡되고, 중앙값이 대표값으로 더 적절</b>하다는 걸 보여주는 사례입니다.</p>`,
+    decide:{
+      q:'사장님께 “평소 하루에 손님이 몇 명인가요?”라고 묻는다면, 어떤 한 문장이 가장 정직할까요?',
+      opts:[
+        '평균 78명이 옵니다.',
+        '평소에는 40명 안팎이고, 이벤트 날만 300명이었습니다. 보통값으로는 중앙값 41명이 맞습니다.',
+        '최댓값 300명이 이 카페의 대표 방문자 수입니다.',
+        '최빈값과 평균이 같으므로 78명이라고 하면 됩니다.'
+      ],
+      ans:1,
+      exp:'이벤트 날 300명이 평균을 78로 끌어올렸습니다. 사장님이 듣고 싶은 “평소”는 중앙값 41명(또는 40명대)입니다.'
+    }
   },
   {
     title:'데이터 3 · 농구선수 8경기 득점',
@@ -809,10 +1104,24 @@ const verifyData=[
       {key:'std',label:'표준편차',calc:a=>S.std(a)},
       {key:'iqr',label:'IQR(Q3−Q1)',calc:a=>{const q=S.quartiles(a);return q.q3-q.q1;}},
     ],
-    interpret:`<p><b>평균 16점, 중앙값 15.5점</b>으로 비슷해 분포가 균형적입니다. <b>표준편차 약 3.57점</b>은 경기마다 평균에서 ±3.6점쯤 오르내린다는 뜻으로, 기복이 아주 크지는 않습니다.</p>
+    interpret:`<p><b>평균 16점, 중앙값 15.5점</b>으로 비슷해 분포가 균형적입니다. <b>표준편차 약 3.57점</b>은 득점이 평균 주변으로 그 정도 크기로 흩어져 있다는 뜻으로, 기복이 아주 크지는 않습니다.</p>
     <p><b>IQR 6점</b>은 가운데 4경기(전형적인 경기들)가 6점 폭 안에 모여 있음을 의미합니다. "이 선수는 보통 13~19점대를 안정적으로 넣는다"고 해석할 수 있습니다.</p>`
   }
 ];
+
+function attachDecide(card, decide, key){
+  if(!decide) return;
+  const box=document.createElement('div');
+  box.className='quizlet';
+  box.dataset.quizlet=key;
+  box.innerHTML=`<div class="q">${decide.q}</div>
+    <div class="opts">${decide.opts.map((o,i)=>
+      `<div class="opt" data-correct="${i===decide.ans?1:0}"><span class="mk">${'ABCDE'[i]}</span><span>${o}</span></div>`
+    ).join('')}</div>
+    <div class="feedback"></div>`;
+  card.appendChild(box);
+  wireQuizlet(box, decide.exp);
+}
 
 function buildVerify(){
   const host=document.getElementById('verify-host');
@@ -827,38 +1136,281 @@ function buildVerify(){
       <div class="interpret"><h4>// 이 숫자들이 말하는 것</h4>${d.interpret}</div>`;
     const grid=card.querySelector('.verify-grid');
     d.fields.forEach(f=>{
-      const tgt=r2(f.calc(d.data));
       const w=document.createElement('div'); w.className='vfield';
-      w.innerHTML=`<label>${f.label}<span class="res"></span></label>
-        <input type="number" step="any" placeholder="값 입력" data-target="${tgt}" aria-label="${d.title} ${f.label}">`;
+      if(f.kind==='mode'){
+        w.innerHTML=`<label>${f.label}<span class="res"></span></label>
+          <input type="text" placeholder="값, 여러 개면 쉼표, 없으면 없음" data-kind="mode" aria-label="${d.title} ${f.label}">`;
+      }else{
+        const tgt=r2(f.calc(d.data));
+        w.innerHTML=`<label>${f.label}<span class="res"></span></label>
+          <input type="number" step="any" placeholder="값 입력" data-target="${tgt}" aria-label="${d.title} ${f.label}">`;
+      }
       grid.appendChild(w);
     });
     const interp=card.querySelector('.interpret');
+    function markVerify(inp,ok,hint){
+      const res=inp.parentElement.querySelector('.res');
+      inp.classList.toggle('ok',ok); inp.classList.toggle('no',!ok);
+      res.textContent=ok?'✓':hint; res.style.color=ok?'var(--good)':'var(--bad)';
+    }
     card.querySelector('[data-act="check"]').onclick=()=>{
       let allok=true;
-      card.querySelectorAll('input').forEach(inp=>{
+      card.querySelectorAll('.verify-grid input').forEach(inp=>{
+        if(inp.dataset.kind==='mode'){
+          const ok=modeMatch(modeParseInput(inp.value), d.data);
+          markVerify(inp,ok, ok?'✓':'정답 '+modeText(d.data));
+          if(!ok) allok=false;
+          return;
+        }
         const tgt=parseFloat(inp.dataset.target), val=parseFloat(inp.value);
-        const res=inp.parentElement.querySelector('.res');
-        if(isNaN(val)){inp.classList.remove('ok','no');res.textContent='';allok=false;return;}
+        if(isNaN(val)){inp.classList.remove('ok','no');inp.parentElement.querySelector('.res').textContent='';allok=false;return;}
         const ok=Math.abs(val-tgt)<=0.06 || r2(val)===tgt;
-        inp.classList.toggle('ok',ok); inp.classList.toggle('no',!ok);
-        res.textContent=ok?'✓':'정답 '+tgt; res.style.color=ok?'var(--good)':'var(--bad)';
+        markVerify(inp,ok, ok?'✓':'정답 '+tgt);
         if(!ok)allok=false;
       });
       if(allok) interp.classList.add('show');
     };
     card.querySelector('[data-act="hint"]').onclick=()=>{
-      card.querySelectorAll('input').forEach(inp=>{
-        inp.value=inp.dataset.target;
-        inp.classList.add('ok');
+      card.querySelectorAll('.verify-grid input').forEach(inp=>{
+        if(inp.dataset.kind==='mode'){
+          const m=S.mode(d.data);
+          inp.value=m==null?'없음':m.join(', ');
+        }else inp.value=inp.dataset.target;
+        inp.classList.add('ok'); inp.classList.remove('no');
         const res=inp.parentElement.querySelector('.res');res.textContent='✓';res.style.color='var(--good)';
       });
       interp.classList.add('show');
     };
+    attachDecide(card, d.decide, 'v'+di);
     host.appendChild(card);
   });
 }
 buildVerify();
+
+/* ===================== 3B. 어떤 숫자를 쓸까 ===================== */
+const decideData=[
+  {
+    title:'상황 1 · 수행평가 점수(5명)',
+    ctx:'한 모둠의 수행평가 점수입니다. 한 명은 미제출로 20점입니다.',
+    data:[20,88,90,92,95],
+    statsNote:'평균 77, 중앙값 90, 최빈값 없음, 범위 75',
+    q:'선생님께 “이 모둠의 전형적인 수행 점수는?”이라고 묻는다면 무엇을 쓰겠습니까?',
+    opts:[
+      '평균 77점 — 모든 학생을 반영하니까',
+      '중앙값 90점 — 미제출 한 명이 평균을 내려서, 나머지의 가운데가 더 정직하다',
+      '최빈값 — 가장 많이 나온 값이 대표니까',
+      '범위 75점 — 퍼짐을 말하는 게 더 중요하다'
+    ],
+    ans:1,
+    exp:'20점은 이상치에 가깝습니다. 평균 77은 “대부분 90점대”라는 느낌을 가립니다. 중앙값 90이 이 모둠의 보통값입니다. (값이 모두 한 번씩이라 최빈값은 없습니다.)',
+    sent:'한 명이 미제출(20점)이라 평균이 77로 내려갑니다. 나머지의 보통값은 중앙값 90점입니다.'
+  },
+  {
+    title:'상황 2 · 통학 시간(분)',
+    ctx:'같은 반 5명의 집→학교 이동 시간(분)입니다. 한 명만 멀리서 옵니다.',
+    data:[12,15,18,20,75],
+    statsNote:'평균 28, 중앙값 18, 최빈값 없음, 범위 63',
+    q:'“우리 반 친구들은 보통 몇 분 걸려 오나요?”에 가장 알맞은 선택은?',
+    opts:[
+      '평균 28분이라고 한다',
+      '중앙값 18분 — 대부분 12~20분이고, 75분은 한 명의 특별한 경우다',
+      '최빈값 12분 — 가장 짧은 시간이 대표다',
+      '범위 63분 — 가장 오래 걸리는 친구 기준으로 말한다'
+    ],
+    ans:1,
+    exp:'평균 28분은 75분 한 명 때문에 부풀어 있습니다. “보통”을 묻는 말에는 중앙값 18분이 맞습니다.',
+    sent:'대부분 12~20분인데 한 명만 75분입니다. 전형적인 통학 시간은 중앙값 18분입니다.'
+  },
+  {
+    title:'상황 3 · 주말 화면 시간(시간)과 학급 신발 사이즈',
+    ctx:'두 자료를 비교해 보세요. (가) 주말 화면 시간(시간): 2, 3, 3, 4, 14 &nbsp; (나) 학급 신발 사이즈(mm): 250, 255, 260, 260, 260, 265, 270',
+    data:[2,3,3,4,14],
+    extra:'250, 255, 260, 260, 260, 265, 270',
+    statsNote:'(가) 평균 5.2 / 중앙값 3 / 최빈값 3 &nbsp; (나) 평균 260 / 중앙값 260 / 최빈값 260',
+    q:'각 자료에서 한 문장으로 말하려면 어떤 조합이 가장 알맞나요?',
+    opts:[
+      '(가)도 (나)도 평균으로 말한다',
+      '(가)는 중앙값 3시간(한 명의 14시간이 평균을 끌어올림), (나)는 최빈값 260mm(가장 흔한 사이즈)',
+      '(가)는 최빈값 14시간, (나)는 범위로 말한다',
+      '두 자료 모두 범위가 대표값이다'
+    ],
+    ans:1,
+    exp:'화면 시간은 14시간 한 명이 평균(5.2)을 끌어올리므로 “보통”은 중앙값 3시간입니다(최빈값도 3). 신발 사이즈는 종류에 가까운 값이라 가장 많이 나온 260mm가 대표입니다.',
+    sent:'주말 화면은 보통 3시간(한 명만 14시간). 학급에서 가장 흔한 신발은 260mm입니다.'
+  }
+];
+
+function buildDecide(){
+  const host=document.getElementById('decide-host'); if(!host) return;
+  const intro=document.createElement('div'); intro.className='card';
+  intro.innerHTML=`<h3>어떤 숫자를 쓰고, 한 문장으로 말하면? <span class="tag mean">해석</span></h3>
+    <p class="muted">계산은 이미 옆에 적어 두었습니다. 질문을 읽고 <b>대푯값을 고른 뒤</b>, 그 선택이 한 문장으로 말이 되는지 확인해 보세요.</p>`;
+  host.appendChild(intro);
+  decideData.forEach((d,i)=>{
+    const card=document.createElement('div'); card.className='card';
+    const extra=d.extra?`<div class="chips" style="margin:6px 0 0">${d.extra.split(/,\s*/).map(v=>`<span class="chip">${v}</span>`).join('')}</div>`:'';
+    card.innerHTML=`<h3>${d.title}</h3>
+      <p class="muted">${d.ctx}</p>
+      <div class="chips" style="margin:10px 0">${d.data.map(v=>`<span class="chip">${v}</span>`).join('')}</div>
+      ${extra}
+      <p class="note" style="margin-top:10px">미리 구한 값: ${d.statsNote}</p>`;
+    attachDecide(card, d, 'd'+i);
+    const sent=document.createElement('div');
+    sent.className='interpret';
+    sent.innerHTML=`<h4>// 한 문장 예시</h4><p>${d.sent}</p>`;
+    card.appendChild(sent);
+    const quiz=card.querySelector('.quizlet');
+    const orig=quiz.querySelectorAll('.opt');
+    orig.forEach(o=>o.addEventListener('click',()=>{
+      if(o.dataset.correct==='1') sent.classList.add('show');
+    }));
+    host.appendChild(card);
+  });
+}
+buildDecide();
+
+/* ===================== 도입 닫기: 두 반 비교 ===================== */
+(function(){
+  const C1=[68,70,72,69,71], C2=[40,95,55,90,70];
+  const s1=S.std(C1), s2=S.std(C2);
+  const i1=S.quartiles(C1), i2=S.quartiles(C2);
+  const iqr1=i1.q3-i1.q1, iqr2=i2.q3-i2.q1;
+  function mark(id,t){
+    const inp=document.getElementById(id), v=parseFloat(inp.value);
+    const ok=!isNaN(v)&&(Math.abs(v-t)<=0.06||r2(v)===r2(t));
+    inp.classList.toggle('ok',ok); inp.classList.toggle('no',!ok); return ok;
+  }
+  function rowBox(a, cy){
+    const W=720,padL=52,padR=36, lo=35, hi=100;
+    const X=v=>padL+(v-lo)/(hi-lo)*(W-padL-padR);
+    const q=S.quartiles(a), iqr=q.q3-q.q1;
+    const loF=q.q1-1.5*iqr, hiF=q.q3+1.5*iqr;
+    const inn=a.filter(x=>x>=loF&&x<=hiF);
+    const wLo=Math.min(...inn), wHi=Math.max(...inn);
+    let s='';
+    s+=`<line x1="${X(wLo)}" y1="${cy}" x2="${X(q.q1)}" y2="${cy}" stroke="#15233E" stroke-width="2"/>`;
+    s+=`<line x1="${X(q.q3)}" y1="${cy}" x2="${X(wHi)}" y2="${cy}" stroke="#15233E" stroke-width="2"/>`;
+    s+=`<line x1="${X(wLo)}" y1="${cy-11}" x2="${X(wLo)}" y2="${cy+11}" stroke="#15233E" stroke-width="2"/>`;
+    s+=`<line x1="${X(wHi)}" y1="${cy-11}" x2="${X(wHi)}" y2="${cy+11}" stroke="#15233E" stroke-width="2"/>`;
+    s+=`<rect x="${X(q.q1)}" y="${cy-22}" width="${Math.max(2,X(q.q3)-X(q.q1))}" height="44" rx="5" fill="#6C4DD6" opacity="0.16" stroke="#6C4DD6" stroke-width="2"/>`;
+    s+=`<line x1="${X(q.q2)}" y1="${cy-22}" x2="${X(q.q2)}" y2="${cy+22}" stroke="#0E9C8A" stroke-width="3"/>`;
+    return s;
+  }
+  function revealViz(){
+    document.getElementById('hk-viz').style.display='block';
+    const W=720,H=210,padL=52,padR=36,lo=35,hi=100;
+    const X=v=>padL+(v-lo)/(hi-lo)*(W-padL-padR);
+    let s=`<rect width="${W}" height="${H}" fill="transparent"/>`;
+    s+=`<text x="8" y="58" font-size="12" font-weight="700" fill="#5C6B85">1반</text>`;
+    s+=`<text x="8" y="128" font-size="12" font-weight="700" fill="#5C6B85">2반</text>`;
+    s+=rowBox(C1,52)+rowBox(C2,122);
+    s+=`<line x1="${padL}" y1="168" x2="${W-padR}" y2="168" stroke="#C2CCDB" stroke-width="1.5"/>`;
+    [40,55,70,85,100].forEach(v=>{
+      s+=`<line x1="${X(v)}" y1="168" x2="${X(v)}" y2="173" stroke="#C2CCDB"/>`;
+      s+=`<text x="${X(v)}" y="190" text-anchor="middle" font-size="11" fill="#5C6B85" font-family="monospace">${v}</text>`;
+    });
+    document.getElementById('hk-svg').innerHTML=s;
+  }
+  document.getElementById('hk-check').onclick=()=>{
+    const a=mark('hk-s1',s1), b=mark('hk-s2',s2), c=mark('hk-i1',iqr1), d=mark('hk-i2',iqr2);
+    const msg=document.getElementById('hk-msg');
+    if(a&&b&&c&&d){
+      msg.className='wkmsg show good';
+      msg.innerHTML=`✓ 1반 표준편차 <b>${fmt(s1)}</b>, IQR <b>${fmt(iqr1)}</b> · 2반 표준편차 <b>${fmt(s2)}</b>, IQR <b>${fmt(iqr2)}</b>. 1반이 훨씬 고릅니다.`;
+      revealViz(); celebrate('두 반 비교 완료! 🎉');
+    }else{
+      msg.className='wkmsg show bad';
+      msg.innerHTML='✗ 빨간 칸을 다시 계산해 보세요. 표준편차는 √(편차²의 평균), IQR은 Tukey 방식으로 Q3−Q1입니다.';
+    }
+  };
+  document.getElementById('hk-reveal').onclick=()=>{
+    document.getElementById('hk-s1').value=fmt(s1);
+    document.getElementById('hk-s2').value=fmt(s2);
+    document.getElementById('hk-i1').value=fmt(iqr1);
+    document.getElementById('hk-i2').value=fmt(iqr2);
+    ['hk-s1','hk-s2','hk-i1','hk-i2'].forEach(id=>document.getElementById(id).classList.add('ok'));
+    const msg=document.getElementById('hk-msg');
+    msg.className='wkmsg show good';
+    msg.innerHTML=`정답: 1반 SD ${fmt(s1)} · IQR ${fmt(iqr1)} / 2반 SD ${fmt(s2)} · IQR ${fmt(iqr2)}.`;
+    revealViz();
+  };
+})();
+
+/* ===================== 우리 반 점수 계산기 ===================== */
+(function(){
+  const ta=document.getElementById('own-input');
+  const out=document.getElementById('own-out');
+  function summarize(a){
+    if(a.length<2){out.style.display='none';return;}
+    out.style.display='block';
+    const q=S.quartiles(a);
+    document.getElementById('own-mean').textContent=fmt(S.mean(a));
+    document.getElementById('own-median').textContent=fmt(S.median(a));
+    document.getElementById('own-mode').textContent=modeText(a);
+    document.getElementById('own-range').textContent=fmt(S.range(a));
+    document.getElementById('own-var').textContent=fmt(S.variance(a));
+    document.getElementById('own-std').textContent=fmt(S.std(a));
+    document.getElementById('own-min').textContent=fmt(Math.min(...a));
+    document.getElementById('own-q1').textContent=fmt(q.q1);
+    document.getElementById('own-q2').textContent=fmt(q.q2);
+    document.getElementById('own-q3').textContent=fmt(q.q3);
+    document.getElementById('own-max').textContent=fmt(Math.max(...a));
+    document.getElementById('own-svg').innerHTML=boxPlotSVG(a,{H:160,cy:70,axisY:118}).svg;
+    document.getElementById('own-sentence').innerHTML=ownSentence(a);
+  }
+  function ownSentence(a){
+    const mn=S.mean(a), md=S.median(a), sd=S.std(a), mo=S.mode(a);
+    const gap=Math.abs(mn-md);
+    const n=a.length;
+    let who='이 자료는';
+    if(gap>Math.max(1, 0.35*sd)){
+      if(mn>md) who=`평균(${fmt(mn)})이 중앙값(${fmt(md)})보다 커서 오른쪽 꼬리가 있어 보입니다. 보통값으로는 <b>중앙값 ${fmt(md)}</b>이 더 정직합니다.`;
+      else who=`평균(${fmt(mn)})이 중앙값(${fmt(md)})보다 작아 왼쪽 꼬리가 있어 보입니다. 보통값으로는 <b>중앙값 ${fmt(md)}</b>이 더 정직합니다.`;
+    }else{
+      who=`평균 ${fmt(mn)}과 중앙값 ${fmt(md)}이 비슷해 한쪽으로 크게 치우치지 않았습니다.`;
+    }
+    const modeBit=mo?` 가장 많이 나온 값은 ${modeText(a)}.`:' 값이 모두 한 번씩이라 최빈값은 없습니다.';
+    return `${n}개 자료의 ${who} 표준편차는 ${fmt(sd)}, 범위는 ${fmt(S.range(a))}입니다.${modeBit}`;
+  }
+  document.getElementById('own-run').onclick=()=>summarize(parseList(ta.value));
+  document.getElementById('own-sample').onclick=()=>{
+    ta.value='72, 68, 90, 55, 81, 77, 64, 88, 70, 95, 40, 83';
+    summarize(parseList(ta.value));
+  };
+  document.getElementById('own-clear').onclick=()=>{ta.value='';out.style.display='none';};
+})();
+
+/* ===================== 68-95-99.7 미리보기 ===================== */
+(function(){
+  const svg=document.getElementById('bell-svg'); if(!svg) return;
+  const W=720,H=220,padL=36,padR=36,padT=28,padB=40;
+  const mean=0, sd=1;
+  function gauss(x){return Math.exp(-0.5*((x-mean)/sd)**2);}
+  const xs=[], ys=[];
+  for(let x=-3.6;x<=3.6;x+=0.08){xs.push(x);ys.push(gauss(x));}
+  const X=x=>padL+(x+3.6)/7.2*(W-padL-padR);
+  const Y=y=>padT+(1-y)*(H-padT-padB);
+  function band(a,b,color,op){
+    let p=`M ${X(a)} ${Y(0)}`;
+    xs.forEach((x,i)=>{if(x>=a&&x<=b)p+=` L ${X(x)} ${Y(ys[i])}`;});
+    p+=` L ${X(b)} ${Y(0)} Z`;
+    return `<path d="${p}" fill="${color}" opacity="${op}"/>`;
+  }
+  let d=`M ${X(xs[0])} ${Y(ys[0])}`;
+  xs.forEach((x,i)=>{if(i)d+=` L ${X(x)} ${Y(ys[i])}`;});
+  let s=`<rect width="${W}" height="${H}" fill="transparent"/>`;
+  s+=band(-3,3,'#6C4DD6',0.10);
+  s+=band(-2,2,'#6C4DD6',0.16);
+  s+=band(-1,1,'#6C4DD6',0.28);
+  s+=`<path d="${d}" fill="none" stroke="#15233E" stroke-width="2"/>`;
+  s+=`<line x1="${X(0)}" y1="${padT}" x2="${X(0)}" y2="${H-padB}" stroke="#E5533D" stroke-width="2"/>`;
+  [-3,-2,-1,0,1,2,3].forEach(v=>{
+    s+=`<line x1="${X(v)}" y1="${H-padB}" x2="${X(v)}" y2="${H-padB+6}" stroke="#C2CCDB"/>`;
+    s+=`<text x="${X(v)}" y="${H-padB+20}" text-anchor="middle" font-size="11" fill="#5C6B85" font-family="monospace">${v===0?'평균':(v>0?'+':'')+v+'σ'}</text>`;
+  });
+  s+=`<text x="${X(0)}" y="${padT-8}" text-anchor="middle" font-size="12" font-weight="700" fill="#E5533D">평균</text>`;
+  svg.innerHTML=s;
+})();
 
 /* ===================== 4. 형성평가 ===================== */
 const EXAM_POOL=[
@@ -875,9 +1427,9 @@ const EXAM_POOL=[
   {t:'평균',type:'mc',q:'자료의 모든 값에 똑같이 5를 더하면 평균은 어떻게 변하는가?',
     opts:['변하지 않는다','5만큼 커진다','5만큼 작아진다','2배가 된다','5만큼 커지고 표준편차도 5 커진다'],ans:1,exp:'모든 값이 5씩 커지면 합도 5n만큼 커지고 평균은 +5.'},
   {t:'평균',type:'mc',q:'자료의 모든 값에 2를 곱하면 평균은 어떻게 변하는가?',
-    opts:['변하지 않는다','2배가 된다','반으로 줄어든다','√2배가 된다','√2배가 된다'],ans:1,exp:'모든 값이 2배 → 합도 2배 → 평균도 2배.'},
-  {t:'평균',type:'mc',q:'A반 10명 평균 70점, B반 10명 평균 80점. 두 반 합쳐 20명의 평균은?',
-    opts:['70점','75점','80점','알 수 없다','두 반 평균의 합인 150점'],ans:1,exp:'(70×10+80×10)÷20=1500÷20=75점.'},
+    opts:['변하지 않는다','2배가 된다','반으로 줄어든다','√2배가 된다','4배가 된다'],ans:1,exp:'모든 값이 2배 → 합도 2배 → 평균도 2배. (4배가 되는 것은 분산입니다.)'},
+  {t:'평균',type:'mc',q:'A반 10명 평균 70점, B반 30명 평균 80점. 두 반을 합친 40명의 평균은?',
+    opts:['75점','77.5점','80점','70점','150점'],ans:1,exp:'인원이 다르면 두 평균을 더해 2로 나누면 안 됩니다. (70×10+80×30)÷40=3100÷40=77.5점.'},
   /* ── 중앙값 (12) ── */
   {t:'중앙값',type:'num',q:'자료 [3, 5, 7, 9, 11]의 중앙값은?',ans:7,exp:'5개 → 3번째 값 = 7.'},
   {t:'중앙값',type:'num',q:'자료 [4, 8, 15, 16, 23, 42]의 중앙값은?',ans:15.5,exp:'6개 → 가운데 두 값 (15+16)/2=15.5.'},
@@ -891,23 +1443,23 @@ const EXAM_POOL=[
     opts:['5번째 값','10번째 값','5번째와 6번째 값의 평균','1번째와 10번째 값의 평균','중앙값은 구할 수 없다'],ans:2,exp:'짝수(10개) → 5번째와 6번째의 평균.'},
   {t:'중앙값',type:'mc',q:'소득처럼 한쪽으로 크게 치우친 자료에서 "보통 소득"을 나타내기에 적절한 것은?',
     opts:['평균','중앙값','최빈값','범위','표준편차'],ans:1,exp:'극단적으로 높은 소득이 평균을 끌어올리므로 중앙값이 더 안정적.'},
-  {t:'중앙값',type:'mc',q:'자료 [3, 4, 4, 5, 100]에서 이상치의 영향을 가장 적게 받는 대표값은?',
-    opts:['평균','중앙값','최빈값','범위','분산'],ans:1,exp:'중앙값은 정렬 후 가운데 값이라 100 같은 이상치에 거의 흔들리지 않는다.'},
+  {t:'중앙값',type:'mc',q:'자료 [3, 5, 6, 7, 100]의 평균은 이상치 100에 끌려 24.2이다. 가운데 위치로 나머지 값(3~7)을 대표하는 값은?',
+    opts:['평균','중앙값','범위','최댓값','분산'],ans:1,exp:'정렬하면 [3,5,6,7,100] → 가운데가 6. 최빈값은 모두 한 번씩이라 없고, 평균은 (3+5+6+7+100)÷5=24.2로 나머지와 동떨어진다.'},
   {t:'중앙값',type:'mc',q:'자료 [2, 5, 8, 11]에 새 값 7을 추가했을 때 중앙값은?',
     opts:['5','7','8','6.5','6'],ans:1,exp:'[2,5,7,8,11] → 5개 → 3번째=7.'},
   /* ── 최빈값 (7) ── */
   {t:'최빈값',type:'mc',q:'자료 [2, 3, 3, 5, 7, 7, 7, 8]의 최빈값은?',
     opts:['3','5','7','없음','2'],ans:2,exp:'7이 세 번으로 가장 많이 나옴.'},
   {t:'최빈값',type:'mc',q:'최빈값이 없는 경우는?',
-    opts:['모든 값이 한 번씩만 나올 때','가장 큰 값이 두 번 나올 때','평균과 같은 값이 있을 때','자료 개수가 짝수일 때','값의 종류가 3개 이상일 때'],ans:0,exp:'모든 값의 도수가 같으면 최빈값이 없다.'},
+    opts:['모든 값이 한 번씩만 나올 때','가장 큰 값이 두 번 나올 때','평균과 같은 값이 있을 때','자료 개수가 짝수일 때','값의 종류가 3개 이상일 때'],ans:0,exp:'이 실험실 규칙: 모든 값이 한 번씩만 나오면 최빈값 없음. 가장 많이 나온 값이 둘 이상이면 쌍봉·다봉(모두 최빈값)이다. 예: [1,1,2,2,3,3]은 1·2·3이 모두 최빈값.'},
   {t:'최빈값',type:'mc',q:'자료 [1, 2, 2, 3, 4, 4]의 최빈값은?',
-    opts:['2','4','2와 4','없음','1'],ans:2,exp:'2와 4가 각각 두 번 → 최빈값이 두 개(2, 4).'},
+    opts:['2','4','2와 4','없음','1'],ans:2,exp:'2와 4가 각각 두 번으로 공동 1등 → 쌍봉, 최빈값은 2와 4. (모두 한 번씩일 때만 없음.)'},
   {t:'최빈값',type:'mc',q:'신발 사이즈, 혈액형처럼 범주형 자료에서 주로 쓰는 대표값은?',
     opts:['평균','중앙값','최빈값','범위','표준편차'],ans:2,exp:'크기 비교가 어려운 범주형 자료엔 가장 많이 나온 값(최빈값)이 적절.'},
   {t:'최빈값',type:'mc',q:'자료 [3, 3, 5, 5, 5, 7, 9]의 최빈값은?',
     opts:['3','5','7','3과 5','없음'],ans:1,exp:'5가 세 번으로 가장 많음.'},
   {t:'최빈값',type:'mc',q:'자료 [1, 2, 3, 4, 5]의 최빈값은?',
-    opts:['1','3','5','없음 (모두 1번)','2'],ans:3,exp:'모든 값이 한 번씩 → 최빈값 없음.'},
+    opts:['1','3','5','없음 (모두 1번)','2'],ans:3,exp:'모든 값이 한 번씩만 나옴 → 이 실험실 규칙에서 최빈값 없음.'},
   {t:'최빈값',type:'mc',q:'평균·중앙값·최빈값 중 반드시 자료에 실제로 있는 값인 것은?',
     opts:['평균','중앙값','최빈값','모두 해당 없음','범위'],ans:2,exp:'최빈값은 자료에 실제로 있는 값. 평균·중앙값은 계산 결과라 자료에 없을 수 있다.'},
   /* ── 범위 (7) ── */
@@ -951,8 +1503,8 @@ const EXAM_POOL=[
   {t:'표준편차',type:'num',q:'분산이 9일 때 표준편차는?',ans:3,exp:'표준편차=√9=3.'},
   {t:'표준편차',type:'mc',q:'표준편차가 나타내는 것은?',
     opts:['자료의 한가운데 위치','자료가 평균에서 흩어진 정도','가장 많이 나온 값','자료의 개수','자료의 합'],ans:1,exp:'표준편차는 √분산으로, 값들이 평균에서 얼마나 흩어졌는지를 나타낸다.'},
-  {t:'표준편차',type:'mc',q:'원자료가 "점(점수)" 단위일 때 원자료와 같은 단위를 갖는 것은?',
-    opts:['분산','표준편차','편차 제곱의 합','범위의 제곱','중앙값'],ans:1,exp:'분산은 점² 단위. 표준편차는 √분산이라 원자료와 같은 단위(점).'},
+  {t:'표준편차',type:'mc',q:'원자료가 "점(점수)" 단위일 때, 산포 척도 가운데 원자료와 같은 단위를 갖는 것은?',
+    opts:['분산','표준편차','편차 제곱의 합','범위의 제곱','편차 제곱의 평균'],ans:1,exp:'분산·편차 제곱의 합·편차 제곱의 평균은 점² 단위. 표준편차는 √분산이라 원자료와 같은 단위(점).'},
   {t:'표준편차',type:'mc',q:'표준편차가 0이라는 것이 의미하는 것은?',
     opts:['평균이 0이다','모든 값이 똑같다','자료가 없다','이상치만 있다','최솟값이 0이다'],ans:1,exp:'표준편차=0 → 분산=0 → 편차 모두 0 → 모든 값이 평균과 같다.'},
   {t:'표준편차',type:'mc',q:'표준편차를 분산 대신 쓰는 주된 이유는?',
@@ -968,8 +1520,8 @@ const EXAM_POOL=[
     opts:['자료 개수가 적다','값들이 평균 근처에 모여 있다','평균이 작다','최솟값이 작다','중앙값과 평균이 항상 같다'],ans:1,exp:'표준편차가 작을수록 퍼짐이 작다 = 값들이 평균 가까이 모여 있다.'},
   {t:'비교',type:'mc',q:'1반 [68,70,72,69,71], 2반 [40,95,55,90,70]. 두 반 평균은 70으로 같다. 어느 반이 더 고른가?',
     opts:['1반','2반','같다','비교 불가','평균이 같으면 표준편차도 같다'],ans:0,exp:'1반 점수가 70 주변에 모여 있다 → 표준편차 작다 → 더 고르다.'},
-  {t:'비교',type:'mc',q:'이상치(극단값)가 하나 포함된 자료에서 가장 크게 영향 받는 것은?',
-    opts:['중앙값','최빈값','평균','사분위수','범위'],ans:2,exp:'평균은 모든 값을 더하므로 극단값에 가장 민감하다.'},
+  {t:'비교',type:'mc',q:'대푯값(평균·중앙값·최빈값) 가운데 이상치(극단값)가 하나 있을 때 가장 크게 흔들리는 것은?',
+    opts:['중앙값','최빈값','평균','Q2','자료의 개수'],ans:2,exp:'평균은 모든 값을 더하므로 극단값에 가장 민감하다. (범위도 끝값에 민감하지만 범위는 대푯값이 아니라 산포 척도이다.)'},
   {t:'비교',type:'mc',q:'치우친 분포에서 산포 척도로 IQR이 표준편차보다 나은 이유는?',
     opts:['계산이 간단해서','이상치의 영향을 받지 않아서','항상 더 작은 값이어서','단위가 없어서','Q1~Q3 범위가 항상 더 좁아서'],ans:1,exp:'표준편차는 편차 제곱으로 이상치에 민감하지만, IQR은 Q1~Q3 사이만 보므로 이상치에 강하다.'},
   {t:'비교',type:'mc',q:'평균과 표준편차가 모두 같은 두 자료에 대해 확실히 알 수 있는 것은?',
@@ -1020,9 +1572,9 @@ const EXAM_POOL=[
   /* ── 이상치 (5) ── */
   {t:'이상치',type:'num',q:'자료 [10, 12, 11, 13, 100]의 평균은? (소수 첫째 자리까지)',ans:29.2,exp:'합 146 ÷ 5 = 29.2. 이상치 100이 평균을 크게 끌어올림(중앙값은 12).'},
   {t:'이상치',type:'mc',q:'Q1=5, Q3=15일 때 이상치 판별에 대한 설명으로 틀린 것은?',
-    opts:['IQR=10이다','아래 펜스=5−15=−10이다','위 펜스=15+15=30이다','Q1보다 작은 값은 무조건 이상치다','IQR을 이용한 이상치 판별이 불가능하다'],ans:3,exp:'Q1보다 작아도 펜스(−10) 안이면 이상치가 아니다. 이상치 기준은 펜스 바깥.'},
+    opts:['IQR=10이다','아래 펜스=5−15=−10이다','위 펜스=15+15=30이다','Q1보다 작은 값은 무조건 이상치다','값 32는 위 펜스 밖이므로 이상치다'],ans:3,exp:'A~C·E는 맞다(IQR=10, 펜스 −10과 30, 32>30). Q1보다 작아도 펜스(−10) 안이면 이상치가 아니다.'},
   {t:'이상치',type:'mc',q:'이상치가 존재할 때 평균보다 중앙값이 더 안정적인 이유는?',
-    opts:['중앙값은 항상 평균보다 크기 때문에','중앙값은 정렬 순서 기반이라 극단값에 덜 영향받기 때문에','중앙값이 계산이 쉽기 때문에','중앙값은 이상치를 자동으로 제거하기 때문에','중앙값은 이상치를 자동으로 제거하기 때문에'],ans:1,exp:'중앙값은 값의 순서만 이용하므로 이상치 하나가 얼마나 크든 가운데 위치는 거의 안 변한다.'},
+    opts:['중앙값은 항상 평균보다 크기 때문에','중앙값은 정렬 순서 기반이라 극단값에 덜 영향받기 때문에','중앙값이 계산이 쉽기 때문에','중앙값은 이상치를 자료에서 자동으로 지우기 때문에','중앙값은 최솟값만 보기 때문에'],ans:1,exp:'중앙값은 값의 순서만 이용하므로 이상치 하나가 얼마나 크든 가운데 위치는 거의 안 변한다. 이상치를 삭제하는 것은 아니다.'},
   {t:'이상치',type:'mc',q:'평균보다 매우 큰 이상치를 제거하면 평균은?',
     opts:['작아진다','커진다','변하지 않는다','항상 0이 된다','항상 중앙값과 같아진다'],ans:0,exp:'평균보다 매우 큰 이상치가 합을 올렸으므로, 제거하면 합이 줄고 평균도 작아진다.'},
   {t:'이상치',type:'mc',q:'Q1=20, Q3=40일 때 값 80은 이상치인가?',
@@ -1040,9 +1592,41 @@ function shuffle(arr){
   return a;
 }
 
+const EXAM_STRATA={
+  center:['평균','중앙값','최빈값'],
+  spread:['범위','편차','분산','표준편차'],
+  box:['사분위수','IQR','상자그림','이상치'],
+  read:['비교']
+};
+function examGroupOf(e){
+  if(EXAM_STRATA.center.includes(e.t)) return 'center';
+  if(EXAM_STRATA.spread.includes(e.t)) return 'spread';
+  if(EXAM_STRATA.box.includes(e.t)) return 'box';
+  return 'read';
+}
+function examQuota(n){
+  if(n<=20) return {center:6, spread:6, box:5, read:3};
+  if(n<=40) return {center:12, spread:12, box:10, read:6};
+  return null;
+}
 function selectExam(){
-  const pool=examMode==='rnd'? shuffle(EXAM_POOL) : [...EXAM_POOL];
-  currentExam=pool.slice(0,Math.min(examCount,pool.length));
+  const n=Math.min(examCount, EXAM_POOL.length);
+  if(n>=EXAM_POOL.length){
+    currentExam=examMode==='rnd'? shuffle(EXAM_POOL):[...EXAM_POOL];
+    return;
+  }
+  const quota=examQuota(n);
+  const groups={center:[],spread:[],box:[],read:[]};
+  EXAM_POOL.forEach(e=>groups[examGroupOf(e)].push(e));
+  let picked=[];
+  ['center','spread','box','read'].forEach(k=>{
+    const src=examMode==='rnd'? shuffle(groups[k]) : groups[k];
+    picked=picked.concat(src.slice(0, Math.min(quota[k], src.length)));
+  });
+  const used=new Set(picked);
+  const rest=(examMode==='rnd'?shuffle(EXAM_POOL):EXAM_POOL).filter(e=>!used.has(e));
+  while(picked.length<n && rest.length) picked.push(rest.shift());
+  currentExam=examMode==='rnd'? shuffle(picked).slice(0,n) : picked.slice(0,n);
 }
 
 // 설정 버튼 wiring
@@ -1084,7 +1668,13 @@ function buildExam(){
       wrap.querySelectorAll('.opt').forEach(o=>o.addEventListener('click',()=>{
         wrap.querySelectorAll('.opt').forEach(x=>x.classList.remove('sel'));
         o.classList.add('sel'); wrap.dataset.pick=o.dataset.k;
+        gradeOne(wrap); tallyExam(false);
       }));
+    }else{
+      const inp=wrap.querySelector('input');
+      const go=()=>{if(inp.value==='')return; gradeOne(wrap); tallyExam(false);};
+      inp.addEventListener('keydown',ev=>{if(ev.key==='Enter')go();});
+      inp.addEventListener('change',go);
     }
     host.appendChild(wrap);
   });
@@ -1112,22 +1702,43 @@ function gradeOne(wrap){
   fb.innerHTML=(ok?'✓ 정답. ':`✗ 정답: ${e.type==='mc'?'ABCDE'[e.ans]+'. ':e.ans+'. '}`)+e.exp;
   return ok;
 }
-document.getElementById('exam-grade').onclick=()=>{
-  let score=0;
-  document.querySelectorAll('.exam-q').forEach(w=>{const r=gradeOne(w);if(r)score++;});
+function tallyExam(scroll){
+  let score=0, answered=0;
+  document.querySelectorAll('.exam-q').forEach(w=>{
+    const r=gradeOne(w); if(r===null) return; answered++; if(r) score++;
+  });
   const total=currentExam.length;
   document.getElementById('exam-score').textContent=`${score} / ${total}`;
-  document.getElementById('exam-bar').style.width=(score/total*100)+'%';
-  if(score>=Math.ceil(total*0.8)) setDone('s4',true);
-  document.querySelector('.exam-actions').scrollIntoView({block:'center',behavior:'smooth'});
-};
+  document.getElementById('exam-bar').style.width=(answered?score/total*100:0)+'%';
+  if(answered===total && score>=Math.ceil(total*0.8)) setDone('s4',true);
+  const miss=document.getElementById('exam-missed');
+  if(miss){
+    const bad=[...document.querySelectorAll('.exam-q')].filter(w=>w.querySelector('.feedback.bad'));
+    if(!bad.length) miss.innerHTML='';
+    else{
+      miss.innerHTML='틀린 문항만: '+bad.map(w=>`<a class="jump" href="#s4" data-jump="${w.dataset.idx}">${w.querySelector('.qnum').textContent}</a>`).join(' ');
+      miss.querySelectorAll('[data-jump]').forEach(a=>a.onclick=e=>{
+        e.preventDefault();
+        const t=document.querySelector(`.exam-q[data-idx="${a.dataset.jump}"]`);
+        if(t) t.scrollIntoView({block:'center',behavior:'smooth'});
+      });
+    }
+  }
+  if(scroll) document.querySelector('.exam-actions').scrollIntoView({block:'center',behavior:'smooth'});
+}
+document.getElementById('exam-grade').onclick=()=>tallyExam(true);
 document.getElementById('exam-reset').onclick=()=>buildExam();
 buildExam();
 /* ===================== 팡파레: 컨페티 + 효과음 ===================== */
 let soundOn=true;
 const muteBtn=document.getElementById('muteBtn');
-if(muteBtn) muteBtn.onclick=()=>{soundOn=!soundOn;
-  muteBtn.textContent=soundOn?'🔊 효과음':'🔇 효과음';};
+function syncMute(){
+  if(!muteBtn) return;
+  muteBtn.textContent=soundOn?'🔊 효과음 켜짐':'🔇 효과음 꺼짐';
+  muteBtn.setAttribute('aria-pressed', soundOn?'false':'true');
+  muteBtn.setAttribute('aria-label', soundOn?'효과음 켜짐, 누르면 끔':'효과음 꺼짐, 누르면 켬');
+}
+if(muteBtn){ syncMute(); muteBtn.onclick=()=>{soundOn=!soundOn; syncMute();}; }
 const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 let actx=null;
@@ -1195,11 +1806,132 @@ function celebrate(msg){
   }
 }
 
+/* ===================== 연습: 평균 손계산 ===================== */
+(function(){
+  const host=document.getElementById('mean-prac'); if(!host) return;
+  const sets=[[5,8,3,7,2],[10,20,30,40],[4,6,8,2],[12,8,10,6,9]];
+  let si=0, arr=sets[0].slice();
+  function render(){
+    const sum=S.sum(arr), mean=S.mean(arr);
+    host.innerHTML=`<div class="chips" style="margin-top:6px">${arr.map(v=>`<span class="chip">${v}</span>`).join('')}</div>
+      <div class="muted" style="margin-top:8px">개수 n = <b>${arr.length}</b></div>
+      <div class="verify-grid">
+        <div class="vfield"><label>합 (모두 더하기)</label><input type="number" step="any" id="mn-sum" placeholder="합"></div>
+        <div class="vfield"><label>평균 = 합 ÷ ${arr.length}</label><input type="number" step="any" id="mn-mean" placeholder="평균"></div>
+      </div>
+      <div class="ctl"><button class="primary" id="mn-check">정답 확인</button>
+        <button id="mn-new">새 문제</button></div>
+      <div class="wkmsg" id="mn-msg"></div>`;
+    const mark=(inp,ok)=>{inp.classList.toggle('ok',ok);inp.classList.toggle('no',!ok);};
+    host.querySelector('#mn-check').onclick=()=>{
+      const s=parseFloat(host.querySelector('#mn-sum').value), m=parseFloat(host.querySelector('#mn-mean').value);
+      const okS=!isNaN(s)&&Math.abs(s-sum)<=0.06, okM=!isNaN(m)&&(Math.abs(m-mean)<=0.06||r2(m)===r2(mean));
+      mark(host.querySelector('#mn-sum'),okS); mark(host.querySelector('#mn-mean'),okM);
+      const msg=host.querySelector('#mn-msg');
+      if(okS&&okM){msg.className='wkmsg show good';
+        msg.innerHTML=`✓ 맞아요. 합 ${fmt(sum)}, 평균 <b style="color:var(--mean)">${fmt(mean)}</b>. 모든 값을 쓴 무게중심입니다.`;
+        celebrate('평균 정답! 🎯');
+      }else{msg.className='wkmsg show bad';
+        msg.innerHTML='✗ 합을 먼저 구한 뒤 개수로 나눠 보세요.';}
+    };
+    host.querySelector('#mn-new').onclick=()=>{si=(si+1)%sets.length;arr=sets[si].slice();render();};
+  }
+  render();
+})();
+
+/* ===================== 연습: 최빈값 ===================== */
+(function(){
+  const host=document.getElementById('mode-prac'); if(!host) return;
+  const sets=[
+    [2,3,3,5,7,7,7,8],
+    [1,2,3,4,5],
+    [1,2,2,3,4,4],
+    [3,3,5,5,5,7,9],
+    [1,1,2,2,3,3]
+  ];
+  let si=0, arr=sets[0].slice();
+  function freqLine(a){
+    const f={}; a.forEach(x=>f[x]=(f[x]||0)+1);
+    return Object.keys(f).sort((x,y)=>x-y).map(k=>`${k} → ${f[k]}번`).join(' · ');
+  }
+  function render(){
+    host.innerHTML=`<div class="chips" style="margin-top:6px">${arr.map(v=>`<span class="chip">${v}</span>`).join('')}</div>
+      <p class="muted" style="margin-top:8px">도수: ${freqLine(arr)}</p>
+      <div class="ctl">
+        <input type="text" id="mo-ans" placeholder="최빈값 또는 없음" style="max-width:220px" aria-label="최빈값">
+        <button class="primary" id="mo-check">정답 확인</button>
+        <button id="mo-new">새 문제</button>
+      </div>
+      <div class="wkmsg" id="mo-msg"></div>`;
+    host.querySelector('#mo-check').onclick=()=>{
+      const user=modeParseInput(host.querySelector('#mo-ans').value);
+      const ok=modeMatch(user,arr);
+      const inp=host.querySelector('#mo-ans');
+      inp.classList.toggle('ok',ok); inp.classList.toggle('no',!ok);
+      const msg=host.querySelector('#mo-msg');
+      if(ok){msg.className='wkmsg show good';
+        msg.innerHTML=`✓ 맞아요. 최빈값 = <b style="color:var(--mode)">${modeText(arr)}</b>.`;
+        celebrate('최빈값 정답! 🎯');
+      }else{msg.className='wkmsg show bad';
+        msg.innerHTML=`✗ 다시 세어 보세요. 정답은 <b>${modeText(arr)}</b> 입니다. 모두 한 번씩이면 없음, 1등이 여럿이면 모두 적습니다.`;}
+    };
+    host.querySelector('#mo-new').onclick=()=>{si=(si+1)%sets.length;arr=sets[si].slice();render();};
+  }
+  render();
+})();
+
+/* ===================== 연습: 범위 비교 ===================== */
+(function(){
+  const host=document.getElementById('range-prac'); if(!host) return;
+  const A=[10,11,12,13,50], B=[10,20,30,40,50];
+  host.innerHTML=`
+    <div class="twocol">
+      <div class="minicard"><div class="label">자료 가</div><div class="nums">${A.join(' · ')}</div>
+        <div class="vfield" style="margin-top:10px"><label>범위 (최대−최소)</label>
+          <input type="number" step="any" id="rg-a" placeholder="?"></div></div>
+      <div class="minicard"><div class="label">자료 나</div><div class="nums">${B.join(' · ')}</div>
+        <div class="vfield" style="margin-top:10px"><label>범위 (최대−최소)</label>
+          <input type="number" step="any" id="rg-b" placeholder="?"></div></div>
+    </div>
+    <div class="ctl"><button class="primary" id="rg-check">채점하기</button></div>
+    <div class="wkmsg" id="rg-msg"></div>
+    <div class="quizlet" data-quizlet="range" style="display:none" id="rg-q">
+      <div class="q">두 자료의 범위가 같다면, 퍼짐도 같다고 할 수 있나요?</div>
+      <div class="opts">
+        <div class="opt" data-correct="0"><span class="mk">A</span><span>같다 — 범위가 같으면 흩어진 정도도 같다</span></div>
+        <div class="opt" data-correct="1"><span class="mk">B</span><span>아니다 — 가는 끝값 50 하나 때문에 범위가 커졌고, 나는 값이 골고루 퍼져 있다</span></div>
+        <div class="opt" data-correct="0"><span class="mk">C</span><span>가의 범위가 더 크다</span></div>
+      </div>
+      <div class="feedback"></div>
+    </div>`;
+  host.querySelector('#rg-check').onclick=()=>{
+    const ta=S.range(A), tb=S.range(B);
+    const ia=host.querySelector('#rg-a'), ib=host.querySelector('#rg-b');
+    const va=parseFloat(ia.value), vb=parseFloat(ib.value);
+    const okA=!isNaN(va)&&va===ta, okB=!isNaN(vb)&&vb===tb;
+    ia.classList.toggle('ok',okA); ia.classList.toggle('no',!okA);
+    ib.classList.toggle('ok',okB); ib.classList.toggle('no',!okB);
+    const msg=host.querySelector('#rg-msg');
+    if(okA&&okB){
+      msg.className='wkmsg show good';
+      msg.innerHTML=`✓ 둘 다 범위 <b>${ta}</b>입니다. 그런데 가의 50은 혼자 튀고, 나는 10부터 50까지 고르게 놓여 있어요. 범위만으로는 이 차이를 못 잡습니다.`;
+      host.querySelector('#rg-q').style.display='block';
+      celebrate('범위 정답! 🎯');
+    }else{msg.className='wkmsg show bad'; msg.innerHTML='✗ 최댓값에서 최솟값을 빼 보세요.';}
+  };
+  wireQuizlet(host.querySelector('[data-quizlet="range"]'),
+    '범위는 끝 두 값만 봅니다. 가와 나의 범위는 같지만, 가운데 분포는 전혀 다릅니다. 그래서 범위 다음에 분산·표준편차·IQR이 필요합니다.');
+})();
+
 /* ===================== 연습 A: 정렬 → 중앙값 ===================== */
 (function(){
-  const host=document.getElementById('med-prac'); if(!host) return;
+  const viz=document.getElementById('med-prac-viz');
+  const inp=document.getElementById('m-ans');
+  const res=document.getElementById('m-res');
+  const checkBtn=document.getElementById('m-check');
+  if(!viz||!inp) return;
   const sets=[[3,8,5,1,9,4],[7,2,9,4,6],[12,5,8,3,11,6,10],[20,14,18,11,16,13]];
-  let arr=sets[0].slice(), sorted=false, found=false, si=0;
+  let arr=sets[0].slice(), sorted=false, found=false, revealed=false, si=0;
   function render(){
     const s=[...arr].sort((a,b)=>a-b), n=s.length, mid=Math.floor(n/2);
     const midIdx = n%2? [mid] : [mid-1,mid];
@@ -1210,36 +1942,40 @@ function celebrate(msg){
     }).join('');
     let steps='';
     if(sorted) steps += `<div class="muted" style="margin-top:8px">정렬됨 · 개수 <b>${n}개</b> (${n%2?'홀수':'짝수'})</div>`;
-    if(found){
+    if(found && !revealed){
+      steps += n%2
+        ? `<div class="muted">가운데를 표시했어요. 그 값이 중앙값입니다. 아래 칸에 적어 보세요.</div>`
+        : `<div class="muted">가운데 두 값을 표시했어요. <b>둘의 평균</b>이 중앙값입니다. 계산해서 적어 보세요.</div>`;
+    }
+    if(revealed){
       const med=S.median(arr);
       steps += n%2
         ? `<div class="muted">가운데 하나 → 중앙값 = <b style="color:var(--median)">${fmt(med)}</b></div>`
         : `<div class="muted">가운데 두 값 ${s[mid-1]}, ${s[mid]} 의 평균 → 중앙값 = <b style="color:var(--median)">${fmt(med)}</b></div>`;
     }
-    host.innerHTML=`<div class="chips" style="margin-top:6px">${chips}</div>
+    viz.innerHTML=`<div class="chips" style="margin-top:6px">${chips}</div>
       <div class="ctl">
-        <button id="m-sort" class="primary" ${sorted?'disabled':''}>① 크기순 정렬</button>
-        <button id="m-find" ${(sorted&&!found)?'':'disabled'}>② 한가운데 찾기</button>
-        <button id="m-new">새 문제</button>
-      </div>${steps}
-      <div class="ctl" style="margin-top:8px">
-        <input type="number" step="any" id="m-ans" placeholder="중앙값 입력" style="max-width:170px">
-        <button id="m-check">정답 확인</button>
-        <span id="m-res" style="font-family:var(--mono);font-weight:700"></span>
-      </div>`;
-    host.querySelector('#m-sort').onclick=()=>{sorted=true;render();};
-    host.querySelector('#m-find').onclick=()=>{found=true;render();};
-    host.querySelector('#m-new').onclick=()=>{si=(si+1)%sets.length;arr=sets[si].slice();sorted=false;found=false;render();};
-    host.querySelector('#m-check').onclick=()=>{
-      const v=parseFloat(host.querySelector('#m-ans').value), t=S.median(arr);
-      const res=host.querySelector('#m-res'), inp=host.querySelector('#m-ans');
-      if(isNaN(v)){res.textContent='';return;}
-      const ok=Math.abs(v-t)<=0.06||r2(v)===r2(t);
-      inp.classList.toggle('ok',ok);inp.classList.toggle('no',!ok);
-      res.textContent=ok?'✓ 정답':'정답은 '+fmt(t); res.style.color=ok?'var(--good)':'var(--bad)';
-      if(ok) celebrate('중앙값 정답! 🎯');
+        <button type="button" id="m-sort" class="primary" ${sorted?'disabled':''}>① 크기순 정렬</button>
+        <button type="button" id="m-find" ${(sorted&&!found)?'':'disabled'}>② 한가운데 찾기</button>
+        <button type="button" id="m-new">새 문제</button>
+      </div>${steps}`;
+    viz.querySelector('#m-sort').onclick=()=>{sorted=true;render();};
+    viz.querySelector('#m-find').onclick=()=>{found=true;render();};
+    viz.querySelector('#m-new').onclick=()=>{
+      si=(si+1)%sets.length;arr=sets[si].slice();sorted=false;found=false;revealed=false;
+      inp.value=''; inp.classList.remove('ok','no'); res.textContent='';
+      render();
     };
   }
+  checkBtn.onclick=()=>{
+    const v=parseFloat(inp.value), t=S.median(arr);
+    if(isNaN(v)){res.textContent='';return;}
+    const ok=Math.abs(v-t)<=0.06||r2(v)===r2(t);
+    inp.classList.toggle('ok',ok);inp.classList.toggle('no',!ok);
+    res.textContent=ok?'✓ 정답':'정답은 '+fmt(t); res.style.color=ok?'var(--good)':'var(--bad)';
+    revealed=true; render();
+    if(ok) celebrate('중앙값 정답! 🎯');
+  };
   render();
 })();
 
@@ -1290,7 +2026,7 @@ function celebrate(msg){
       checkOne('#v-sumsq',sumsq); checkOne('#v-var',S.variance(data)); checkOne('#v-std',S.std(data));
       const msg=host.querySelector('#v-msg');
       if(all){msg.className='wkmsg show good';
-        msg.innerHTML=`✓ 완벽해요! 분산 <b>${fmt(S.variance(data))}</b>, 표준편차 <b>${fmt(S.std(data))}</b>. 값들이 평균에서 평균적으로 약 ${fmt(S.std(data))}만큼 흩어져 있다는 뜻이에요.`;
+        msg.innerHTML=`✓ 완벽해요! 분산 <b>${fmt(S.variance(data))}</b>, 표준편차 <b>${fmt(S.std(data))}</b>. 값들이 평균 주변으로 그 정도 크기로 흩어져 있다는 뜻이에요(|편차|의 평균과는 조금 다릅니다).`;
         celebrate('표준편차 완성! 🎉');
       }else{msg.className='wkmsg show bad';
         msg.innerHTML='✗ 빨간 칸을 다시 확인해 보세요. 편차는 <b>값 − 평균</b>, 제곱은 그 편차를 제곱한 값이에요.';}
