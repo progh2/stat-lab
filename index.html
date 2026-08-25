@@ -307,7 +307,7 @@
     <div class="brand">기초 통계량 실험실 <small>· 숫자로 데이터 읽기</small></div>
     <nav class="steps" id="steps"></nav>
     <button class="mute" id="muteBtn" aria-label="효과음 켜기/끄기">🔊 효과음</button>
-    <div class="progress-meter" id="meter">0 / 5 완료</div>
+    <div class="progress-meter" id="meter">0 / 4 완료</div>
   </div>
 </div>
 
@@ -493,7 +493,8 @@
       <div class="concept warm">
         <h4>📍 표준편차(standard deviation) <span class="pill">√분산</span></h4>
         <p>그래서 분산에 <b>제곱근</b>을 씌워 단위를 원래대로(점² → 점) 되돌린 값이 <span class="term">표준편차</span>예요. 가장 자주 쓰는 산포의 척도입니다.</p>
-        <p>읽는 법이 직관적이에요. 표준편차가 <b>3점</b>이라면 "값들이 평균에서 <b>평균적으로 ±3점쯤</b> 떨어져 있다"는 뜻이거든요. 작을수록 옹기종기 모여 있고, 클수록 넓게 퍼져 있습니다.</p>
+        <p>읽는 법이 직관적이에요. 표준편차가 <b>3점</b>이라면 값들이 평균을 중심으로 <b>대략 그 크기만큼 흩어져 있다</b>는 뜻입니다. 작을수록 옹기종기 모여 있고, 클수록 넓게 퍼져 있습니다.</p>
+        <p class="note" style="margin-bottom:0">표준편차는 |편차|의 평균(평균절대편차)과 다릅니다. 편차를 <b>제곱</b>한 뒤 다시 제곱근을 취하므로, 멀리 떨어진 값이 더 크게 반영됩니다. “평균적으로 ±3”이라고 외우기보다 <b>흩어진 정도의 대표 크기</b>로 읽는 편이 정확해요.</p>
         <div class="steps-flow">
           <span class="b">① 평균</span><span class="ar">→</span>
           <span class="b">② 편차(값−평균)</span><span class="ar">→</span>
@@ -517,7 +518,7 @@
       <div class="stat-row">
         <div class="stat"><div class="k">평균</div><div class="v" id="sp-mean">50</div></div>
         <div class="stat"><div class="k">분산 (variance)</div><div class="v" id="sp-var">–</div></div>
-        <div class="stat"><div class="k"><span class="swatch sw-spread"></span>표준편차 (s)</div><div class="v" id="sp-std">–</div></div>
+        <div class="stat"><div class="k"><span class="swatch sw-spread"></span>표준편차 (σ)</div><div class="v" id="sp-std">–</div></div>
       </div>
       <div class="viz"><svg id="sp-svg" viewBox="0 0 720 240" role="img" aria-label="퍼짐 정도에 따른 분포 막대그래프"></svg></div>
       <div class="ctl" style="flex-direction:column;align-items:stretch">
@@ -525,7 +526,7 @@
         <input type="range" id="sp-range" min="0" max="100" value="40" />
       </div>
       <div class="formula">분산 = (편차)²의 평균 = Σ(xᵢ − 평균)² ÷ n &nbsp;|&nbsp; 표준편차 = √분산</div>
-      <p class="muted">📌 <b>편차</b>는 각 값이 평균에서 떨어진 거리(값 − 평균)입니다. 그냥 더하면 0이 되니까, <b>제곱</b>해서 더한 뒤 평균 낸 것이 분산입니다. 분산은 단위가 제곱(점²)이라 감이 안 와서, 다시 <b>제곱근</b>을 씌워 원래 단위로 되돌린 것이 <b>표준편차</b>입니다. 그래서 표준편차는 "값들이 평균에서 평균적으로 ± 얼마나 떨어져 있나"로 읽습니다.</p>
+      <p class="muted">📌 <b>편차</b>는 각 값이 평균에서 떨어진 거리(값 − 평균)입니다. 그냥 더하면 0이 되니까, <b>제곱</b>해서 더한 뒤 평균 낸 것이 분산입니다. 분산은 단위가 제곱(점²)이라 감이 안 와서, 다시 <b>제곱근</b>을 씌워 원래 단위로 되돌린 것이 <b>표준편차</b>입니다. 흩어진 정도의 대표 크기로 읽으면 됩니다(|편차|의 평균과는 조금 다릅니다).</p>
     </div>
 
     <div class="card">
@@ -693,11 +694,11 @@
       <div class="sec-no">04</div>
       <div>
         <h2>형성평가 · <span style="color:var(--spread)">문항 은행</span></h2>
-        <p>약 100문항 풀에서 20·40·전체를 순서 또는 랜덤으로 풀어 보세요. 문제마다 바로 채점되고, 풀이가 나옵니다.</p>
+        <p>약 100문항 풀에서 20·40·전체를 순서 또는 랜덤으로 풀어 보세요. 답을 고르거나 입력하면 바로 풀이가 나오고, 아래 바로 전체 점수도 집계됩니다.</p>
       </div>
     </div>
     <div class="card">
-      <p class="muted">선택형은 보기를 고르면 되고, 계산형은 칸에 숫자를 입력합니다. (소수는 둘째 자리까지, 예: <span class="kbd">2.24</span>) 분산·표준편차는 <b>편차 제곱의 평균(÷n)</b> 기준입니다.</p>
+      <p class="muted">선택형은 보기를 고르면 바로 채점되고, 계산형은 숫자를 입력한 뒤 Enter(또는 칸 밖 클릭)로 채점됩니다. (소수는 둘째 자리까지, 예: <span class="kbd">2.24</span>) 분산·표준편차는 <b>편차 제곱의 평균(÷n)</b> 기준입니다. 20·40문제는 중심·퍼짐·사분위/상자·해석이 고르게 나옵니다.</p>
       <div class="exam-cfg">
         <div class="cfg-group">
           <span class="cfg-label">문제 수</span>
@@ -1049,7 +1050,7 @@ const verifyData=[
       {key:'std',label:'표준편차',calc:a=>S.std(a)},
     ],
     interpret:`<p><b>평균 8점, 중앙값 8점</b>으로 거의 일치합니다. 자료가 한쪽으로 치우치지 않고 고르게 분포한다는 신호예요.</p>
-    <p><b>표준편차 약 1.41점</b>은 "점수가 평균(8점)에서 평균적으로 1.4점 정도 떨어져 있다"는 뜻입니다. 만점 기준으로 보면 매우 안정적으로 비슷하게 맞힌 모둠입니다.</p>`
+    <p><b>표준편차 약 1.41점</b>은 점수가 평균 8점 주변으로 그 정도 크기로 흩어져 있다는 뜻입니다. 만점 기준으로 보면 매우 안정적으로 비슷하게 맞힌 모둠입니다.</p>`
   },
   {
     title:'데이터 2 · 카페 일주일 방문자 수',
@@ -1058,7 +1059,7 @@ const verifyData=[
     fields:[
       {key:'mean',label:'평균',calc:a=>S.mean(a)},
       {key:'median',label:'중앙값',calc:a=>S.median(a)},
-      {key:'mode',label:'최빈값',calc:a=>{const m=S.mode(a);return m?m[0]:NaN;}},
+      {key:'mode',label:'최빈값',kind:'mode'},
       {key:'max',label:'최댓값',calc:a=>Math.max(...a)},
     ],
     interpret:`<p><b>평균은 78명</b>인데 <b>실제 6일은 38~45명</b> 수준이죠. 이벤트 날의 <b>300명(이상치)</b>이 평균을 혼자 끌어올린 겁니다.</p>
@@ -1085,7 +1086,7 @@ const verifyData=[
       {key:'std',label:'표준편차',calc:a=>S.std(a)},
       {key:'iqr',label:'IQR(Q3−Q1)',calc:a=>{const q=S.quartiles(a);return q.q3-q.q1;}},
     ],
-    interpret:`<p><b>평균 16점, 중앙값 15.5점</b>으로 비슷해 분포가 균형적입니다. <b>표준편차 약 3.57점</b>은 경기마다 평균에서 ±3.6점쯤 오르내린다는 뜻으로, 기복이 아주 크지는 않습니다.</p>
+    interpret:`<p><b>평균 16점, 중앙값 15.5점</b>으로 비슷해 분포가 균형적입니다. <b>표준편차 약 3.57점</b>은 득점이 평균 주변으로 그 정도 크기로 흩어져 있다는 뜻으로, 기복이 아주 크지는 않습니다.</p>
     <p><b>IQR 6점</b>은 가운데 4경기(전형적인 경기들)가 6점 폭 안에 모여 있음을 의미합니다. "이 선수는 보통 13~19점대를 안정적으로 넣는다"고 해석할 수 있습니다.</p>`
   }
 ];
@@ -1117,30 +1118,47 @@ function buildVerify(){
       <div class="interpret"><h4>// 이 숫자들이 말하는 것</h4>${d.interpret}</div>`;
     const grid=card.querySelector('.verify-grid');
     d.fields.forEach(f=>{
-      const tgt=r2(f.calc(d.data));
       const w=document.createElement('div'); w.className='vfield';
-      w.innerHTML=`<label>${f.label}<span class="res"></span></label>
-        <input type="number" step="any" placeholder="값 입력" data-target="${tgt}" aria-label="${d.title} ${f.label}">`;
+      if(f.kind==='mode'){
+        w.innerHTML=`<label>${f.label}<span class="res"></span></label>
+          <input type="text" placeholder="값, 여러 개면 쉼표, 없으면 없음" data-kind="mode" aria-label="${d.title} ${f.label}">`;
+      }else{
+        const tgt=r2(f.calc(d.data));
+        w.innerHTML=`<label>${f.label}<span class="res"></span></label>
+          <input type="number" step="any" placeholder="값 입력" data-target="${tgt}" aria-label="${d.title} ${f.label}">`;
+      }
       grid.appendChild(w);
     });
     const interp=card.querySelector('.interpret');
+    function markVerify(inp,ok,hint){
+      const res=inp.parentElement.querySelector('.res');
+      inp.classList.toggle('ok',ok); inp.classList.toggle('no',!ok);
+      res.textContent=ok?'✓':hint; res.style.color=ok?'var(--good)':'var(--bad)';
+    }
     card.querySelector('[data-act="check"]').onclick=()=>{
       let allok=true;
       card.querySelectorAll('.verify-grid input').forEach(inp=>{
+        if(inp.dataset.kind==='mode'){
+          const ok=modeMatch(modeParseInput(inp.value), d.data);
+          markVerify(inp,ok, ok?'✓':'정답 '+modeText(d.data));
+          if(!ok) allok=false;
+          return;
+        }
         const tgt=parseFloat(inp.dataset.target), val=parseFloat(inp.value);
-        const res=inp.parentElement.querySelector('.res');
-        if(isNaN(val)){inp.classList.remove('ok','no');res.textContent='';allok=false;return;}
+        if(isNaN(val)){inp.classList.remove('ok','no');inp.parentElement.querySelector('.res').textContent='';allok=false;return;}
         const ok=Math.abs(val-tgt)<=0.06 || r2(val)===tgt;
-        inp.classList.toggle('ok',ok); inp.classList.toggle('no',!ok);
-        res.textContent=ok?'✓':'정답 '+tgt; res.style.color=ok?'var(--good)':'var(--bad)';
+        markVerify(inp,ok, ok?'✓':'정답 '+tgt);
         if(!ok)allok=false;
       });
       if(allok) interp.classList.add('show');
     };
     card.querySelector('[data-act="hint"]').onclick=()=>{
       card.querySelectorAll('.verify-grid input').forEach(inp=>{
-        inp.value=inp.dataset.target;
-        inp.classList.add('ok');
+        if(inp.dataset.kind==='mode'){
+          const m=S.mode(d.data);
+          inp.value=m==null?'없음':m.join(', ');
+        }else inp.value=inp.dataset.target;
+        inp.classList.add('ok'); inp.classList.remove('no');
         const res=inp.parentElement.querySelector('.res');res.textContent='✓';res.style.color='var(--good)';
       });
       interp.classList.add('show');
@@ -1467,8 +1485,8 @@ const EXAM_POOL=[
   {t:'표준편차',type:'num',q:'분산이 9일 때 표준편차는?',ans:3,exp:'표준편차=√9=3.'},
   {t:'표준편차',type:'mc',q:'표준편차가 나타내는 것은?',
     opts:['자료의 한가운데 위치','자료가 평균에서 흩어진 정도','가장 많이 나온 값','자료의 개수','자료의 합'],ans:1,exp:'표준편차는 √분산으로, 값들이 평균에서 얼마나 흩어졌는지를 나타낸다.'},
-  {t:'표준편차',type:'mc',q:'원자료가 "점(점수)" 단위일 때 원자료와 같은 단위를 갖는 것은?',
-    opts:['분산','표준편차','편차 제곱의 합','범위의 제곱','중앙값'],ans:1,exp:'분산은 점² 단위. 표준편차는 √분산이라 원자료와 같은 단위(점).'},
+  {t:'표준편차',type:'mc',q:'원자료가 "점(점수)" 단위일 때, 산포 척도 가운데 원자료와 같은 단위를 갖는 것은?',
+    opts:['분산','표준편차','편차 제곱의 합','범위의 제곱','편차 제곱의 평균'],ans:1,exp:'분산·편차 제곱의 합·편차 제곱의 평균은 점² 단위. 표준편차는 √분산이라 원자료와 같은 단위(점).'},
   {t:'표준편차',type:'mc',q:'표준편차가 0이라는 것이 의미하는 것은?',
     opts:['평균이 0이다','모든 값이 똑같다','자료가 없다','이상치만 있다','최솟값이 0이다'],ans:1,exp:'표준편차=0 → 분산=0 → 편차 모두 0 → 모든 값이 평균과 같다.'},
   {t:'표준편차',type:'mc',q:'표준편차를 분산 대신 쓰는 주된 이유는?',
@@ -1536,7 +1554,7 @@ const EXAM_POOL=[
   /* ── 이상치 (5) ── */
   {t:'이상치',type:'num',q:'자료 [10, 12, 11, 13, 100]의 평균은? (소수 첫째 자리까지)',ans:29.2,exp:'합 146 ÷ 5 = 29.2. 이상치 100이 평균을 크게 끌어올림(중앙값은 12).'},
   {t:'이상치',type:'mc',q:'Q1=5, Q3=15일 때 이상치 판별에 대한 설명으로 틀린 것은?',
-    opts:['IQR=10이다','아래 펜스=5−15=−10이다','위 펜스=15+15=30이다','Q1보다 작은 값은 무조건 이상치다','IQR을 이용한 이상치 판별이 불가능하다'],ans:3,exp:'Q1보다 작아도 펜스(−10) 안이면 이상치가 아니다. 이상치 기준은 펜스 바깥.'},
+    opts:['IQR=10이다','아래 펜스=5−15=−10이다','위 펜스=15+15=30이다','Q1보다 작은 값은 무조건 이상치다','값 32는 위 펜스 밖이므로 이상치다'],ans:3,exp:'A~C·E는 맞다(IQR=10, 펜스 −10과 30, 32>30). Q1보다 작아도 펜스(−10) 안이면 이상치가 아니다.'},
   {t:'이상치',type:'mc',q:'이상치가 존재할 때 평균보다 중앙값이 더 안정적인 이유는?',
     opts:['중앙값은 항상 평균보다 크기 때문에','중앙값은 정렬 순서 기반이라 극단값에 덜 영향받기 때문에','중앙값이 계산이 쉽기 때문에','중앙값은 이상치를 자료에서 자동으로 지우기 때문에','중앙값은 최솟값만 보기 때문에'],ans:1,exp:'중앙값은 값의 순서만 이용하므로 이상치 하나가 얼마나 크든 가운데 위치는 거의 안 변한다. 이상치를 삭제하는 것은 아니다.'},
   {t:'이상치',type:'mc',q:'평균보다 매우 큰 이상치를 제거하면 평균은?',
@@ -1556,9 +1574,41 @@ function shuffle(arr){
   return a;
 }
 
+const EXAM_STRATA={
+  center:['평균','중앙값','최빈값'],
+  spread:['범위','편차','분산','표준편차'],
+  box:['사분위수','IQR','상자그림','이상치'],
+  read:['비교']
+};
+function examGroupOf(e){
+  if(EXAM_STRATA.center.includes(e.t)) return 'center';
+  if(EXAM_STRATA.spread.includes(e.t)) return 'spread';
+  if(EXAM_STRATA.box.includes(e.t)) return 'box';
+  return 'read';
+}
+function examQuota(n){
+  if(n<=20) return {center:6, spread:6, box:5, read:3};
+  if(n<=40) return {center:12, spread:12, box:10, read:6};
+  return null;
+}
 function selectExam(){
-  const pool=examMode==='rnd'? shuffle(EXAM_POOL) : [...EXAM_POOL];
-  currentExam=pool.slice(0,Math.min(examCount,pool.length));
+  const n=Math.min(examCount, EXAM_POOL.length);
+  if(n>=EXAM_POOL.length){
+    currentExam=examMode==='rnd'? shuffle(EXAM_POOL):[...EXAM_POOL];
+    return;
+  }
+  const quota=examQuota(n);
+  const groups={center:[],spread:[],box:[],read:[]};
+  EXAM_POOL.forEach(e=>groups[examGroupOf(e)].push(e));
+  let picked=[];
+  ['center','spread','box','read'].forEach(k=>{
+    const src=examMode==='rnd'? shuffle(groups[k]) : groups[k];
+    picked=picked.concat(src.slice(0, Math.min(quota[k], src.length)));
+  });
+  const used=new Set(picked);
+  const rest=(examMode==='rnd'?shuffle(EXAM_POOL):EXAM_POOL).filter(e=>!used.has(e));
+  while(picked.length<n && rest.length) picked.push(rest.shift());
+  currentExam=examMode==='rnd'? shuffle(picked).slice(0,n) : picked.slice(0,n);
 }
 
 // 설정 버튼 wiring
@@ -1600,7 +1650,13 @@ function buildExam(){
       wrap.querySelectorAll('.opt').forEach(o=>o.addEventListener('click',()=>{
         wrap.querySelectorAll('.opt').forEach(x=>x.classList.remove('sel'));
         o.classList.add('sel'); wrap.dataset.pick=o.dataset.k;
+        gradeOne(wrap); tallyExam(false);
       }));
+    }else{
+      const inp=wrap.querySelector('input');
+      const go=()=>{if(inp.value==='')return; gradeOne(wrap); tallyExam(false);};
+      inp.addEventListener('keydown',ev=>{if(ev.key==='Enter')go();});
+      inp.addEventListener('change',go);
     }
     host.appendChild(wrap);
   });
@@ -1628,15 +1684,18 @@ function gradeOne(wrap){
   fb.innerHTML=(ok?'✓ 정답. ':`✗ 정답: ${e.type==='mc'?'ABCDE'[e.ans]+'. ':e.ans+'. '}`)+e.exp;
   return ok;
 }
-document.getElementById('exam-grade').onclick=()=>{
-  let score=0;
-  document.querySelectorAll('.exam-q').forEach(w=>{const r=gradeOne(w);if(r)score++;});
+function tallyExam(scroll){
+  let score=0, answered=0;
+  document.querySelectorAll('.exam-q').forEach(w=>{
+    const r=gradeOne(w); if(r===null) return; answered++; if(r) score++;
+  });
   const total=currentExam.length;
   document.getElementById('exam-score').textContent=`${score} / ${total}`;
-  document.getElementById('exam-bar').style.width=(score/total*100)+'%';
-  if(score>=Math.ceil(total*0.8)) setDone('s4',true);
-  document.querySelector('.exam-actions').scrollIntoView({block:'center',behavior:'smooth'});
-};
+  document.getElementById('exam-bar').style.width=(answered?score/total*100:0)+'%';
+  if(answered===total && score>=Math.ceil(total*0.8)) setDone('s4',true);
+  if(scroll) document.querySelector('.exam-actions').scrollIntoView({block:'center',behavior:'smooth'});
+}
+document.getElementById('exam-grade').onclick=()=>tallyExam(true);
 document.getElementById('exam-reset').onclick=()=>buildExam();
 buildExam();
 /* ===================== 팡파레: 컨페티 + 효과음 ===================== */
@@ -1923,7 +1982,7 @@ function celebrate(msg){
       checkOne('#v-sumsq',sumsq); checkOne('#v-var',S.variance(data)); checkOne('#v-std',S.std(data));
       const msg=host.querySelector('#v-msg');
       if(all){msg.className='wkmsg show good';
-        msg.innerHTML=`✓ 완벽해요! 분산 <b>${fmt(S.variance(data))}</b>, 표준편차 <b>${fmt(S.std(data))}</b>. 값들이 평균에서 평균적으로 약 ${fmt(S.std(data))}만큼 흩어져 있다는 뜻이에요.`;
+        msg.innerHTML=`✓ 완벽해요! 분산 <b>${fmt(S.variance(data))}</b>, 표준편차 <b>${fmt(S.std(data))}</b>. 값들이 평균 주변으로 그 정도 크기로 흩어져 있다는 뜻이에요(|편차|의 평균과는 조금 다릅니다).`;
         celebrate('표준편차 완성! 🎉');
       }else{msg.className='wkmsg show bad';
         msg.innerHTML='✗ 빨간 칸을 다시 확인해 보세요. 편차는 <b>값 − 평균</b>, 제곱은 그 편차를 제곱한 값이에요.';}
