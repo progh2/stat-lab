@@ -305,9 +305,9 @@
     margin:16px 0 2px;
   }
   .guide > img{
-    width:108px;height:108px;flex:0 0 108px;
-    object-fit:cover;object-position:50% 12%;
-    border-radius:18px;background:#F3EDE4;
+    width:120px;height:148px;flex:0 0 120px;
+    object-fit:contain;object-position:center top;
+    border-radius:16px;background:#F3EDE4;
     display:block;
   }
   .guide-bubble{
@@ -344,7 +344,7 @@
     .guide, .card > .guide, .hook > .guide{
       flex-direction:column;flex-wrap:nowrap;align-items:flex-start;gap:8px;
     }
-    .guide > img{width:88px;height:88px;flex:0 0 auto;}
+    .guide > img{width:96px;height:118px;flex:0 0 96px;}
     .guide-bubble{flex:1 1 auto;width:100%;max-width:100%;border-radius:6px 16px 16px 16px;}
     .guide-bubble::before{
       left:22px;bottom:auto;top:-7px;
@@ -377,7 +377,7 @@
 
     <div class="hook">
       <aside class="guide">
-        <img src="assets/guide-hello.webp" alt="하나 — 손을 흔들며 인사하는 모습" width="240" height="240">
+        <img src="assets/guide-hello.png" alt="하나 — 손을 흔들며 인사하는 모습" width="240" height="296">
         <div class="guide-bubble">
           <span class="guide-name">하나</span>
           <p>평균만 보면 두 반이 똑같아 보이는데, 진짜일까?</p>
@@ -468,7 +468,7 @@
         <p>💛 "모든 도수가 같다"고 무조건 없는 게 아니에요. <b>[1, 1, 2, 2, 3, 3]</b>처럼 각각 두 번씩이면 1·2·3이 모두 최빈값(다봉)입니다. 없는 경우는 <b>전부 한 번씩</b>일 때뿐입니다.</p>
       </div>
       <aside class="guide">
-        <img src="assets/guide-teach.webp" alt="하나 — 손가락으로 가리키며 설명하는 모습" width="240" height="240">
+        <img src="assets/guide-teach.png" alt="하나 — 손가락으로 가리키며 설명하는 모습" width="240" height="296">
         <div class="guide-bubble">
           <span class="guide-name">하나</span>
           <p>혈액형 평균은 말이 안 되지. 제일 많은 걸 세는 거야.</p>
@@ -509,7 +509,7 @@
       </div>
       <p class="muted" style="margin-top:12px" id="ct-hint">💡 <b>이상치</b> 버튼을 눌러 보세요. <b>평균선은 이상치 쪽으로 확 끌려가지만, 중앙값선은 거의 안 움직입니다.</b> <b>오른쪽 꼬리 / 왼쪽 꼬리</b>를 누르면 세 선이 서로 떨어집니다. 오른쪽 꼬리(큰 값 쪽으로 늘어진 분포)에서는 보통 <b>최빈값 &lt; 중앙값 &lt; 평균</b> 순서가 됩니다.</p>
       <aside class="guide">
-        <img src="assets/guide-wow.webp" alt="하나 — 놀라서 두 손을 든 모습" width="240" height="240">
+        <img src="assets/guide-wow.png" alt="하나 — 놀라서 두 손을 든 모습" width="240" height="296">
         <div class="guide-bubble">
           <span class="guide-name">하나</span>
           <p>어, 저 점 하나가 평균을 다 끌고 가!</p>
@@ -557,7 +557,7 @@
         <p>💛 단, 범위는 <b>양 끝 두 값만</b> 씁니다. 가운데가 옹기종기 모여 있든, 골고루 퍼져 있든 범위는 같을 수 있어요. 그래서 "구하기는 쉬운데, 이야기 전체를 듣지는 못하는" 숫자입니다.</p>
       </div>
       <aside class="guide">
-        <img src="assets/guide-think.webp" alt="하나 — 턱에 손을 대고 생각하는 모습" width="240" height="240">
+        <img src="assets/guide-think.png" alt="하나 — 턱에 손을 대고 생각하는 모습" width="240" height="296">
         <div class="guide-bubble">
           <span class="guide-name">하나</span>
           <p>끝에서 끝만 빼면, 가운데가 모여 있는지는 안 보여.</p>
@@ -577,7 +577,7 @@
         <p>그런데 편차를 전부 더하면 항상 <b>0</b>이 돼요(+와 −가 정확히 상쇄되거든요). 그래서 "흩어진 정도"를 재려면 부호를 없애야 하는데, 그 방법이 <b>제곱</b>입니다.</p>
       </div>
       <aside class="guide">
-        <img src="assets/guide-teach.webp" alt="하나 — 손가락으로 가리키며 설명하는 모습" width="240" height="240">
+        <img src="assets/guide-teach.png" alt="하나 — 손가락으로 가리키며 설명하는 모습" width="240" height="296">
         <div class="guide-bubble">
           <span class="guide-name">하나</span>
           <p>+랑 −를 그냥 더하면 0이 되거든. 그래서 제곱하는 거야.</p>
@@ -734,7 +734,7 @@
         <p>표준편차는 <b>흩어진 정도</b>이지 잘함/못함이 아닙니다. 모든 학생이 똑같이 40점이면 표준편차는 0이지만 "잘했다"는 뜻은 아니에요. 반대로 창의 과제처럼 다양성이 중요하면 어느 정도 퍼짐이 자연스럽습니다. 1반이 더 고르다는 것은 "점수가 비슷하다"는 뜻이지, 2반보다 항상 우수하다는 뜻은 아닙니다.</p>
       </div>
       <aside class="guide">
-        <img src="assets/guide-ok.webp" alt="하나 — 엄지를 올리며 괜찮다고 하는 모습" width="240" height="240">
+        <img src="assets/guide-ok.png" alt="하나 — 엄지를 올리며 괜찮다고 하는 모습" width="240" height="296">
         <div class="guide-bubble">
           <span class="guide-name">하나</span>
           <p>1반이 더 고르지? 평균은 같았잖아.</p>
@@ -805,7 +805,7 @@
     </div>
     <div class="card">
       <aside class="guide">
-        <img src="assets/guide-hello.webp" alt="하나 — 손을 흔들며 인사하는 모습" width="240" height="240">
+        <img src="assets/guide-hello.png" alt="하나 — 손을 흔들며 인사하는 모습" width="240" height="296">
         <div class="guide-bubble">
           <span class="guide-name">하나</span>
           <p>지금까지 만진 것만 나와. 천천히 해도 괜찮아.</p>
@@ -1215,7 +1215,7 @@ const verifyData=[
 
 function guideHTML(pose, alt, line){
   return `<aside class="guide">
-    <img src="assets/guide-${pose}.webp" alt="${alt}" width="240" height="240">
+    <img src="assets/guide-${pose}.png" alt="${alt}" width="240" height="296">
     <div class="guide-bubble">
       <span class="guide-name">하나</span>
       <p>${line}</p>
