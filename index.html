@@ -298,6 +298,59 @@
   .rulebox + .rulebox{margin-top:8px;}
   a.jump{color:var(--spread);font-weight:700;text-decoration:none;border-bottom:1px dashed rgba(108,77,214,.45);}
   a.jump:hover{border-bottom-style:solid;}
+
+  /* ---------- 안내 캐릭터 (하나) ---------- */
+  .guide{
+    display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px 12px;
+    margin:16px 0 2px;
+  }
+  .guide > img{
+    width:120px;height:148px;flex:0 0 120px;
+    object-fit:contain;object-position:center top;
+    border-radius:16px;background:#F3EDE4;
+    display:block;
+  }
+  .guide-bubble{
+    position:relative;flex:1 1 220px;min-width:0;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:16px 16px 16px 6px;
+    box-shadow:var(--shadow);
+    padding:11px 15px 13px;
+  }
+  .guide-bubble::before{
+    content:"";position:absolute;left:-7px;bottom:22px;
+    width:12px;height:12px;background:var(--surface);
+    border-left:1px solid var(--line);border-bottom:1px solid var(--line);
+    transform:rotate(45deg);
+  }
+  .guide-name{
+    display:block;font-size:11px;font-weight:800;letter-spacing:.06em;
+    color:var(--spread);margin:0 0 3px;
+  }
+  .guide-bubble p{margin:0;font-size:15px;line-height:1.55;color:var(--ink);font-weight:600;}
+  .hook > .guide{margin-top:0;margin-bottom:14px;}
+  .card > .guide, .hook > .guide{
+    background:var(--surface-2);border:1px solid var(--line);
+    border-radius:14px;padding:10px 12px 8px;
+  }
+  .card > .guide .guide-bubble, .hook > .guide .guide-bubble{
+    background:#fff;box-shadow:none;
+  }
+  .card > .guide .guide-bubble::before, .hook > .guide .guide-bubble::before{
+    background:#fff;
+  }
+  @media (max-width:560px){
+    .guide, .card > .guide, .hook > .guide{
+      flex-direction:column;flex-wrap:nowrap;align-items:flex-start;gap:8px;
+    }
+    .guide > img{width:96px;height:118px;flex:0 0 96px;}
+    .guide-bubble{flex:1 1 auto;width:100%;max-width:100%;border-radius:6px 16px 16px 16px;}
+    .guide-bubble::before{
+      left:22px;bottom:auto;top:-7px;
+      border-left:1px solid var(--line);border-bottom:none;border-top:1px solid var(--line);
+    }
+  }
 </style>
 </head>
 <body>
@@ -323,6 +376,13 @@
     <p class="lead">자료를 일일이 들여다볼 수는 없습니다. 그래서 우리는 자료의 <b>중심</b>과 <b>퍼짐</b>을 몇 개의 숫자로 압축합니다. 직접 값을 바꿔 보고, 손으로 계산해 검증하고, 마지막에 형성평가로 확인해 보세요.</p>
 
     <div class="hook">
+      <aside class="guide">
+        <img src="assets/guide-hello.png" alt="하나 — 손을 흔들며 인사하는 모습" width="240" height="296">
+        <div class="guide-bubble">
+          <span class="guide-name">하나</span>
+          <p>평균만 보면 두 반이 똑같아 보이는데, 진짜일까?</p>
+        </div>
+      </aside>
       <h3>먼저 질문 하나 — 두 반 중 어느 반이 더 "고르게" 공부했을까요?</h3>
       <p class="muted">두 반 모두 평균 점수는 <b>같습니다(70점)</b>. 그런데 느낌이 다릅니다.</p>
       <div class="twocol">
@@ -407,6 +467,13 @@
         <div class="rulebox">③ 혈액형·신발 사이즈처럼 <b>종류(범주)</b>를 나타내는 자료에서는 평균·중앙값보다 최빈값이 대표값으로 적절합니다. 평균 혈액형이란 말은 성립하지 않거든요.</div>
         <p>💛 "모든 도수가 같다"고 무조건 없는 게 아니에요. <b>[1, 1, 2, 2, 3, 3]</b>처럼 각각 두 번씩이면 1·2·3이 모두 최빈값(다봉)입니다. 없는 경우는 <b>전부 한 번씩</b>일 때뿐입니다.</p>
       </div>
+      <aside class="guide">
+        <img src="assets/guide-teach.png" alt="하나 — 손가락으로 가리키며 설명하는 모습" width="240" height="296">
+        <div class="guide-bubble">
+          <span class="guide-name">하나</span>
+          <p>혈액형 평균은 말이 안 되지. 제일 많은 걸 세는 거야.</p>
+        </div>
+      </aside>
 
       <h3 style="margin-top:18px">직접 연습 — 몇 번 나왔는지 세어 보기</h3>
       <p class="muted">자료를 보고 최빈값을 입력하세요. 없으면 <span class="kbd">없음</span>, 여러 개면 쉼표로 적으면 됩니다 (예: <span class="kbd">2, 4</span>).</p>
@@ -441,6 +508,13 @@
         <button id="ct-reset">처음으로</button>
       </div>
       <p class="muted" style="margin-top:12px" id="ct-hint">💡 <b>이상치</b> 버튼을 눌러 보세요. <b>평균선은 이상치 쪽으로 확 끌려가지만, 중앙값선은 거의 안 움직입니다.</b> <b>오른쪽 꼬리 / 왼쪽 꼬리</b>를 누르면 세 선이 서로 떨어집니다. 오른쪽 꼬리(큰 값 쪽으로 늘어진 분포)에서는 보통 <b>최빈값 &lt; 중앙값 &lt; 평균</b> 순서가 됩니다.</p>
+      <aside class="guide">
+        <img src="assets/guide-wow.png" alt="하나 — 놀라서 두 손을 든 모습" width="240" height="296">
+        <div class="guide-bubble">
+          <span class="guide-name">하나</span>
+          <p>어, 저 점 하나가 평균을 다 끌고 가!</p>
+        </div>
+      </aside>
       <p class="note">상자그림과 이어 읽기: 오른쪽 꼬리는 상자그림에서 <b>오른쪽 수염이 길게</b> 나타납니다. 왼쪽 꼬리면 왼쪽 수염이 길어요. 아래 ②단원 상자그림에 같은 자료를 넣어 비교해 보세요.</p>
 
       <div class="myth">
@@ -482,6 +556,13 @@
         <div class="formula">범위 = 최댓값 − 최솟값</div>
         <p>💛 단, 범위는 <b>양 끝 두 값만</b> 씁니다. 가운데가 옹기종기 모여 있든, 골고루 퍼져 있든 범위는 같을 수 있어요. 그래서 "구하기는 쉬운데, 이야기 전체를 듣지는 못하는" 숫자입니다.</p>
       </div>
+      <aside class="guide">
+        <img src="assets/guide-think.png" alt="하나 — 턱에 손을 대고 생각하는 모습" width="240" height="296">
+        <div class="guide-bubble">
+          <span class="guide-name">하나</span>
+          <p>끝에서 끝만 빼면, 가운데가 모여 있는지는 안 보여.</p>
+        </div>
+      </aside>
 
       <h3 style="margin-top:18px">직접 비교 — 범위는 같은데 느낌이 다를 때</h3>
       <p class="muted">두 자료의 범위를 직접 구한 뒤, 범위만으로 퍼짐을 말할 수 있는지 생각해 보세요.</p>
@@ -495,6 +576,13 @@
         <p><span class="term">편차</span>는 각 값이 평균에서 얼마나 떨어져 있는지예요. 그냥 <b>값 − 평균</b>이죠. 평균보다 크면 +, 작으면 −가 됩니다.</p>
         <p>그런데 편차를 전부 더하면 항상 <b>0</b>이 돼요(+와 −가 정확히 상쇄되거든요). 그래서 "흩어진 정도"를 재려면 부호를 없애야 하는데, 그 방법이 <b>제곱</b>입니다.</p>
       </div>
+      <aside class="guide">
+        <img src="assets/guide-teach.png" alt="하나 — 손가락으로 가리키며 설명하는 모습" width="240" height="296">
+        <div class="guide-bubble">
+          <span class="guide-name">하나</span>
+          <p>+랑 −를 그냥 더하면 0이 되거든. 그래서 제곱하는 거야.</p>
+        </div>
+      </aside>
       <div class="concept">
         <h4>📍 분산(variance) <span class="pill">편차²의 평균</span></h4>
         <p><span class="term">분산</span>은 <b>편차를 제곱해서 모두 더한 뒤, 자료 개수로 나눈 값</b>이에요. 값들이 평균에서 멀리 흩어질수록 커집니다.</p>
@@ -645,6 +733,13 @@
         <h4>흔한 오해 · <span class="wrong">“표준편차가 작을수록 항상 좋다”</span></h4>
         <p>표준편차는 <b>흩어진 정도</b>이지 잘함/못함이 아닙니다. 모든 학생이 똑같이 40점이면 표준편차는 0이지만 "잘했다"는 뜻은 아니에요. 반대로 창의 과제처럼 다양성이 중요하면 어느 정도 퍼짐이 자연스럽습니다. 1반이 더 고르다는 것은 "점수가 비슷하다"는 뜻이지, 2반보다 항상 우수하다는 뜻은 아닙니다.</p>
       </div>
+      <aside class="guide">
+        <img src="assets/guide-ok.png" alt="하나 — 엄지를 올리며 괜찮다고 하는 모습" width="240" height="296">
+        <div class="guide-bubble">
+          <span class="guide-name">하나</span>
+          <p>1반이 더 고르지? 평균은 같았잖아.</p>
+        </div>
+      </aside>
     </div>
   </section>
 
@@ -709,6 +804,13 @@
       </div>
     </div>
     <div class="card">
+      <aside class="guide">
+        <img src="assets/guide-hello.png" alt="하나 — 손을 흔들며 인사하는 모습" width="240" height="296">
+        <div class="guide-bubble">
+          <span class="guide-name">하나</span>
+          <p>지금까지 만진 것만 나와. 천천히 해도 괜찮아.</p>
+        </div>
+      </aside>
       <p class="muted">선택형은 보기를 고르면 바로 채점되고, 계산형은 숫자를 입력한 뒤 Enter(또는 칸 밖 클릭)로 채점됩니다. (소수는 둘째 자리까지, 예: <span class="kbd">2.24</span>) 분산·표준편차는 <b>편차 제곱의 평균(÷n)</b> 기준입니다. 20·40문제는 중심·퍼짐·사분위/상자·해석이 고르게 나옵니다.</p>
       <div class="exam-cfg">
         <div class="cfg-group">
@@ -1082,6 +1184,8 @@ const verifyData=[
     ],
     interpret:`<p><b>평균은 78명</b>인데 <b>실제 6일은 38~45명</b> 수준이죠. 이벤트 날의 <b>300명(이상치)</b>이 평균을 혼자 끌어올린 겁니다.</p>
     <p>이럴 때 "평소 방문자"를 묻는다면 평균보다 <b>중앙값 41명</b>이 훨씬 정직합니다. <b>이상치가 있으면 평균은 왜곡되고, 중앙값이 대표값으로 더 적절</b>하다는 걸 보여주는 사례입니다.</p>`,
+    guide:{pose:'think', alt:'하나 — 턱에 손을 대고 생각하는 모습',
+      line:'평소 손님이 78명이라고 하면 사장님이 속아.'},
     decide:{
       q:'사장님께 “평소 하루에 손님이 몇 명인가요?”라고 묻는다면, 어떤 한 문장이 가장 정직할까요?',
       opts:[
@@ -1108,6 +1212,16 @@ const verifyData=[
     <p><b>IQR 6점</b>은 가운데 4경기(전형적인 경기들)가 6점 폭 안에 모여 있음을 의미합니다. "이 선수는 보통 13~19점대를 안정적으로 넣는다"고 해석할 수 있습니다.</p>`
   }
 ];
+
+function guideHTML(pose, alt, line){
+  return `<aside class="guide">
+    <img src="assets/guide-${pose}.png" alt="${alt}" width="240" height="296">
+    <div class="guide-bubble">
+      <span class="guide-name">하나</span>
+      <p>${line}</p>
+    </div>
+  </aside>`;
+}
 
 function attachDecide(card, decide, key){
   if(!decide) return;
@@ -1181,6 +1295,10 @@ function buildVerify(){
       });
       interp.classList.add('show');
     };
+    if(d.guide){
+      const interp=card.querySelector('.interpret');
+      interp.insertAdjacentHTML('beforebegin', guideHTML(d.guide.pose, d.guide.alt, d.guide.line));
+    }
     attachDecide(card, d.decide, 'v'+di);
     host.appendChild(card);
   });
